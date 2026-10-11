@@ -1,0 +1,166 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #F7F9F7;
+    color: #061f1c;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    font-family: "Plus Jakarta Sans", "Inter", "Atkinson Hyperlegible", system-ui, sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Edge-to-Edge 6px Triage Indicator Stripe */
+.triage-stripe {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  height: 6px;
+  width: 100%;
+}
+
+/* Brand Clinical Gradient & Primary Helpers */
+.bg-brand-primary {
+  background-color: #00614b !important;
+}
+.bg-brand-primary:hover {
+  background-color: #004d3b !important;
+}
+.bg-brand-gradient {
+  background: linear-gradient(135deg, #00513e 0%, #00614b 50%, #003227 100%) !important;
+}
+
+/* Hard Shadows matching Stitch */
+.hard-shadow-sm {
+  box-shadow: 2px 2px 0px #082019;
+}
+
+.hard-shadow-md {
+  box-shadow: 3px 3px 0px #082019;
+}
+
+.hard-shadow-lg {
+  box-shadow: 4px 4px 0px #082019;
+}
+
+.hard-shadow-left {
+  box-shadow: 3px 0px 0px #082019;
+}
+
+.soft-shadow-card {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+}
+
+/* Ticket Edge Cutouts */
+.ticket-edge-left,
+.ticket-notch-left {
+  position: absolute;
+  top: 50%;
+  left: -9px;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  background-color: #f8fafc;
+  border-radius: 9999px;
+  border-right: 2px solid #cbd5e1;
+  z-index: 20;
+}
+
+.ticket-edge-right,
+.ticket-notch-right {
+  position: absolute;
+  top: 50%;
+  right: -9px;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  background-color: #f8fafc;
+  border-radius: 9999px;
+  border-left: 2px solid #cbd5e1;
+  z-index: 20;
+}
+
+/* Material Symbols Outlined font */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 20px;
+  line-height: 1;
+  display: inline-block;
+  text-transform: none;
+  letter-spacing: normal;
+  word-wrap: normal;
+  white-space: nowrap;
+  direction: ltr;
+  vertical-align: middle;
+}
+
+/* Tabular Numbers */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Custom Scrollbars */
+.custom-scroll::-webkit-scrollbar,
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scroll::-webkit-scrollbar-track,
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb,
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb:hover,
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Skeleton Loading Shimmer Effect */
+@keyframes skeleton-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+  background-color: #e2e8f0;
+}
+
+.skeleton-shimmer::after {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0.45) 30%,
+    rgba(255, 255, 255, 0.75) 50%,
+    rgba(255, 255, 255, 0.45) 70%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: skeleton-shimmer 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  content: '';
+}
+

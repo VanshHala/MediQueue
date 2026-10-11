@@ -159,7 +159,7 @@ export const BloodRequestsBoard = () => {
         {/* SCREEN HEADER */}
         <section className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
           <div>
-            <div className="flex items-center gap-1.5 text-brand-darkGreen text-xs font-bold tracking-widest uppercase mb-1">
+            <div className="flex items-center gap-1.5 text-[#00614b] text-xs font-bold tracking-widest uppercase mb-1">
               <span className="material-symbols-outlined text-[15px]">bloodtype</span>
               <span>BLOOD DEPOT & TRANSFUSION REGISTRY</span>
             </div>
@@ -174,15 +174,15 @@ export const BloodRequestsBoard = () => {
           <div className="flex items-center gap-3 shrink-0 flex-wrap">
             <Link
               to="/find-donors"
-              className="h-10 px-4 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold flex items-center gap-2 transition-colors shadow-xs"
+              className="h-10 px-4 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold flex items-center gap-2 transition-colors shadow-sm"
             >
-              <span className="material-symbols-outlined text-[18px] text-brand-darkGreen">person_search</span>
+              <span className="material-symbols-outlined text-[18px] text-[#00614b]">person_search</span>
               <span>Find Voluntary Donors</span>
             </Link>
 
             <button
               onClick={() => setShowModal(true)}
-              className="h-10 px-5 rounded-xl bg-brand-darkGreen hover:bg-teal-900 text-white text-xs font-bold flex items-center gap-2 shadow-xs transition-colors"
+              className="h-10 px-5 rounded-xl bg-[#00614b] hover:bg-[#004d3b] text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-colors cursor-pointer"
             >
               <span className="material-symbols-outlined text-[18px]">add_circle</span>
               <span>Post Blood Requisition</span>
@@ -191,7 +191,7 @@ export const BloodRequestsBoard = () => {
         </section>
 
         {/* SEARCH & FILTER CONTROLS */}
-        <section className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs space-y-4">
+        <section className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm space-y-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
             {/* Search Input */}
             <div className="relative flex-1 max-w-md">
@@ -203,7 +203,7 @@ export const BloodRequestsBoard = () => {
                 placeholder="Search by patient, hospital, or phone..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-darkGreen"
+                className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00614b]"
               />
               {searchQuery && (
                 <button
@@ -232,7 +232,7 @@ export const BloodRequestsBoard = () => {
                 onClick={() => setSelectedStatus('OPEN')}
                 className={`px-3 py-1.5 rounded-lg font-bold transition-colors ${
                   selectedStatus === 'OPEN'
-                    ? 'bg-brand-darkGreen text-white shadow-xs'
+                    ? 'bg-[#00614b] text-white shadow-xs'
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
               >
@@ -276,9 +276,9 @@ export const BloodRequestsBoard = () => {
                 <button
                   key={grp}
                   onClick={() => setSelectedGroup(grp)}
-                  className={`px-3 py-1 text-xs font-bold rounded-lg shrink-0 transition-all ${
+                  className={`px-3 py-1 text-xs font-bold rounded-lg shrink-0 transition-all cursor-pointer ${
                     isActive
-                      ? 'bg-brand-darkGreen text-white shadow-xs'
+                      ? 'bg-[#00614b] text-white shadow-xs'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
@@ -302,7 +302,7 @@ export const BloodRequestsBoard = () => {
               </div>
               <span className="text-xs text-slate-500 flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span>Live Telemetry</span>
+                <span>Live Database Registry</span>
               </span>
             </div>
 
@@ -315,7 +315,7 @@ export const BloodRequestsBoard = () => {
               </div>
             ) : filteredRequests.length === 0 ? (
               /* EMPTY STATE */
-              <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center space-y-3 shadow-xs">
+              <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center space-y-3 shadow-sm">
                 <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
                   <span className="material-symbols-outlined text-2xl">bloodtype</span>
                 </div>
@@ -334,14 +334,14 @@ export const BloodRequestsBoard = () => {
                         setSelectedUrgency('ALL');
                         setSearchQuery('');
                       }}
-                      className="px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-bold rounded-xl transition-colors"
+                      className="px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-bold rounded-xl transition-colors cursor-pointer"
                     >
                       Clear Filters
                     </button>
                   )}
                   <button
                     onClick={() => setShowModal(true)}
-                    className="px-4 py-2 bg-brand-darkGreen text-white text-xs font-bold rounded-xl hover:bg-teal-900 transition-colors shadow-xs"
+                    className="px-4 py-2 bg-[#00614b] text-white text-xs font-bold rounded-xl hover:bg-[#004d3b] transition-colors shadow-sm cursor-pointer"
                   >
                     Post New Request
                   </button>
@@ -354,10 +354,15 @@ export const BloodRequestsBoard = () => {
                 const isFulfilled = req.status === 'FULFILLED';
                 const units = req.units || req.units_required || req.units_needed || 1;
 
+                // Only staff (doctor, admin, receptionist) OR the patient who created this requisition can mark it fulfilled
+                const isRequester = user && req.requester_id && String(req.requester_id) === String(user.id);
+                const isStaff = user && ['doctor', 'admin', 'receptionist'].includes(user.role);
+                const canFulfill = Boolean(isRequester || isStaff);
+
                 return (
                   <article
                     key={req.id}
-                    className={`bg-white rounded-2xl border p-5 relative overflow-hidden shadow-xs transition-all ${
+                    className={`bg-white rounded-2xl border p-5 relative overflow-hidden shadow-sm transition-all ${
                       isFulfilled
                         ? 'border-slate-200 opacity-90'
                         : isCritical
@@ -385,8 +390,8 @@ export const BloodRequestsBoard = () => {
                               <span>CRITICAL (&lt; 30 MINS)</span>
                             </span>
                           ) : (
-                            <span className="px-2.5 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-bold bg-teal-50 text-brand-darkGreen border border-teal-200 flex items-center gap-1">
-                              <span className="w-1.5 h-1.5 rounded-full bg-brand-darkGreen"></span>
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-bold bg-teal-50 text-[#00614b] border border-teal-200 flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#00614b]"></span>
                               <span>{req.urgency || 'ACTIVE'}</span>
                             </span>
                           )}
@@ -431,7 +436,7 @@ export const BloodRequestsBoard = () => {
                             <span>Contact:</span>
                             <a
                               href={`tel:${req.contact_phone}`}
-                              className="font-mono text-brand-darkGreen font-semibold ml-1 hover:underline"
+                              className="font-mono text-[#00614b] font-semibold ml-1 hover:underline"
                             >
                               {req.contact_phone}
                             </a>
@@ -456,39 +461,40 @@ export const BloodRequestsBoard = () => {
                     {/* Action Bar */}
                     <div className="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                        <span className="material-symbols-outlined text-[16px] text-brand-darkGreen">
+                        <span className="material-symbols-outlined text-[16px] text-[#00614b]">
                           location_on
                         </span>
                         <span>{req.city || 'Ahmedabad Central Zone'}</span>
                       </div>
 
                       <div className="flex items-center gap-2 flex-wrap">
-                        {/* Direct Phone Call */}
+                        {/* Direct Phone Call Button displaying full phone number */}
                         {req.contact_phone && (
                           <a
                             href={`tel:${req.contact_phone}`}
-                            className="h-8 px-3 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                            className="h-8 px-3 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-mono font-bold flex items-center gap-1.5 transition-colors border border-slate-200"
+                            title="Call contact number directly"
                           >
-                            <span className="material-symbols-outlined text-[15px]">call</span>
-                            <span>Call</span>
+                            <span className="material-symbols-outlined text-[15px] text-[#00614b]">call</span>
+                            <span>Call {req.contact_phone}</span>
                           </a>
                         )}
 
-                        {/* Match Local Donors */}
+                        {/* Match Local Donors Button */}
                         <button
                           onClick={() => navigate(`/find-donors?group=${encodeURIComponent(req.blood_group)}`)}
-                          className="h-8 px-3.5 rounded-lg bg-brand-darkGreen hover:bg-teal-900 text-white text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs"
+                          className="h-8 px-3.5 rounded-lg bg-[#00614b] hover:bg-[#004d3b] text-white text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer"
                         >
                           <span className="material-symbols-outlined text-[15px]">person_search</span>
                           <span>Match Compatible Donors</span>
                         </button>
 
-                        {/* Mark As Fulfilled Button */}
-                        {!isFulfilled && (
+                        {/* Mark As Fulfilled Button - ONLY for staff or requisition creator */}
+                        {!isFulfilled && canFulfill && (
                           <button
                             onClick={() => handleFulfill(req.id)}
                             disabled={fulfillingId === req.id}
-                            className="h-8 px-3 rounded-lg bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200 text-xs font-bold flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                            className="h-8 px-3 rounded-lg bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200 text-xs font-bold flex items-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer"
                           >
                             <span className="material-symbols-outlined text-[15px]">check</span>
                             <span>{fulfillingId === req.id ? 'Updating...' : 'Mark Fulfilled'}</span>
@@ -505,8 +511,8 @@ export const BloodRequestsBoard = () => {
           {/* RIGHT COLUMN: REQUISITION HELPER & COMPATIBILITY GUIDE (4 Cols) */}
           <section className="lg:col-span-4 space-y-5">
             {/* 1. Post New Requisition Card */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
-              <div className="flex items-center gap-2 text-brand-darkGreen">
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
+              <div className="flex items-center gap-2 text-[#00614b]">
                 <span className="material-symbols-outlined text-xl">emergency_share</span>
                 <h3 className="font-bold text-sm text-slate-900">Need Immediate Blood?</h3>
               </div>
@@ -515,7 +521,7 @@ export const BloodRequestsBoard = () => {
               </p>
               <button
                 onClick={() => setShowModal(true)}
-                className="w-full h-10 rounded-xl bg-brand-darkGreen hover:bg-teal-900 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-xs transition-colors"
+                className="w-full h-10 rounded-xl bg-[#00614b] hover:bg-[#004d3b] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-colors cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[17px]">add_circle</span>
                 <span>Post Blood Requisition</span>
@@ -523,9 +529,9 @@ export const BloodRequestsBoard = () => {
             </div>
 
             {/* 2. Clinical Compatibility Reference Guide */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
               <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                <div className="flex items-center gap-1.5 text-brand-darkGreen">
+                <div className="flex items-center gap-1.5 text-[#00614b]">
                   <span className="material-symbols-outlined text-lg">medical_services</span>
                   <h3 className="font-bold text-sm text-slate-900">RBC Compatibility Guide</h3>
                 </div>
@@ -573,8 +579,8 @@ export const BloodRequestsBoard = () => {
             </div>
 
             {/* 3. Voluntary Donors Directory Link */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
-              <div className="flex items-center gap-2 text-brand-darkGreen">
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
+              <div className="flex items-center gap-2 text-[#00614b]">
                 <span className="material-symbols-outlined text-lg">volunteer_activism</span>
                 <h3 className="font-bold text-sm text-slate-900">Voluntary Donors Network</h3>
               </div>
@@ -585,7 +591,7 @@ export const BloodRequestsBoard = () => {
                 to="/find-donors"
                 className="w-full h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center justify-center gap-2 transition-colors"
               >
-                <span className="material-symbols-outlined text-[17px] text-brand-darkGreen">search</span>
+                <span className="material-symbols-outlined text-[17px] text-[#00614b]">search</span>
                 <span>Browse Registered Donors</span>
               </Link>
             </div>
@@ -609,7 +615,7 @@ export const BloodRequestsBoard = () => {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-xl">close</span>
                 </button>
@@ -627,7 +633,7 @@ export const BloodRequestsBoard = () => {
                       placeholder="e.g. Ramesh Patel"
                       value={formData.patient_name}
                       onChange={(e) => setFormData({ ...formData, patient_name: e.target.value })}
-                      className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-darkGreen"
+                      className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00614b]"
                     />
                   </div>
 
@@ -638,7 +644,7 @@ export const BloodRequestsBoard = () => {
                     <select
                       value={formData.blood_group}
                       onChange={(e) => setFormData({ ...formData, blood_group: e.target.value })}
-                      className="w-full px-3 py-2 text-xs font-bold text-rose-600 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-darkGreen"
+                      className="w-full px-3 py-2 text-xs font-bold text-rose-600 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00614b]"
                     >
                       {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map((grp) => (
                         <option key={grp} value={grp}>
@@ -661,7 +667,7 @@ export const BloodRequestsBoard = () => {
                       required
                       value={formData.units_required}
                       onChange={(e) => setFormData({ ...formData, units_required: e.target.value })}
-                      className="w-full px-3 py-2 text-xs font-mono font-bold bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-darkGreen"
+                      className="w-full px-3 py-2 text-xs font-mono font-bold bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00614b]"
                     />
                   </div>
 
@@ -672,7 +678,7 @@ export const BloodRequestsBoard = () => {
                     <select
                       value={formData.urgency}
                       onChange={(e) => setFormData({ ...formData, urgency: e.target.value })}
-                      className="w-full px-3 py-2 text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-darkGreen"
+                      className="w-full px-3 py-2 text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00614b]"
                     >
                       <option value="CRITICAL">CRITICAL (&lt; 30 mins)</option>
                       <option value="URGENT">URGENT (&lt; 2 hrs)</option>
@@ -691,7 +697,7 @@ export const BloodRequestsBoard = () => {
                       required
                       value={formData.hospital_name}
                       onChange={(e) => setFormData({ ...formData, hospital_name: e.target.value })}
-                      className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-darkGreen"
+                      className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00614b]"
                     />
                   </div>
 
@@ -702,7 +708,7 @@ export const BloodRequestsBoard = () => {
                     <select
                       value={formData.selectedAreaIndex}
                       onChange={(e) => setFormData({ ...formData, selectedAreaIndex: Number(e.target.value) })}
-                      className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-darkGreen"
+                      className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00614b]"
                     >
                       {AHMEDABAD_AREAS.map((a, idx) => (
                         <option key={a.name} value={idx}>
@@ -723,7 +729,7 @@ export const BloodRequestsBoard = () => {
                       required
                       value={formData.contact_phone}
                       onChange={(e) => setFormData({ ...formData, contact_phone: e.target.value })}
-                      className="w-full px-3 py-2 text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-darkGreen"
+                      className="w-full px-3 py-2 text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00614b]"
                     />
                   </div>
 
@@ -736,7 +742,7 @@ export const BloodRequestsBoard = () => {
                       placeholder="e.g. Crossmatch ready at ICU Bay 2"
                       value={formData.notes}
                       onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                      className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-darkGreen"
+                      className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00614b]"
                     />
                   </div>
                 </div>
@@ -745,14 +751,14 @@ export const BloodRequestsBoard = () => {
                   <button
                     type="button"
                     onClick={() => setShowModal(false)}
-                    className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+                    className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="px-5 py-2.5 text-xs font-bold text-white bg-brand-darkGreen hover:bg-teal-900 disabled:opacity-50 rounded-xl flex items-center gap-1.5 shadow-xs transition-colors"
+                    className="px-5 py-2.5 text-xs font-bold text-white bg-[#00614b] hover:bg-[#004d3b] disabled:opacity-50 rounded-xl flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
                   >
                     <span className="material-symbols-outlined text-base">emergency_share</span>
                     <span>{submitting ? 'Submitting...' : 'Post Requisition'}</span>

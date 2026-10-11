@@ -31,7 +31,8 @@ const defaultDonorsPool = [
     distanceKm: 2.4,
     daysAgo: 120,
     isAvailable: true,
-    maskedPhone: '98421*****',
+    phone: '9842103948',
+    maskedPhone: '9842103948',
     badge: 'Verified Donor',
     stripeColor: 'bg-teal-700',
   },
@@ -43,7 +44,8 @@ const defaultDonorsPool = [
     distanceKm: 4.1,
     daysAgo: 95,
     isAvailable: true,
-    maskedPhone: '98250*****',
+    phone: '9825014820',
+    maskedPhone: '9825014820',
     badge: 'Verified Medical Staff',
     stripeColor: 'bg-teal-800',
   },
@@ -55,7 +57,8 @@ const defaultDonorsPool = [
     distanceKm: 5.8,
     daysAgo: 140,
     isAvailable: true,
-    maskedPhone: '97120*****',
+    phone: '9712038472',
+    maskedPhone: '9712038472',
     badge: 'Regular Donor (4x)',
     stripeColor: 'bg-amber-600',
   },
@@ -67,7 +70,8 @@ const defaultDonorsPool = [
     distanceKm: 6.2,
     daysAgo: 180,
     isAvailable: true,
-    maskedPhone: '98980*****',
+    phone: '9898014529',
+    maskedPhone: '9898014529',
     badge: 'Universal Donor (O-)',
     stripeColor: 'bg-rose-600',
   },
@@ -79,7 +83,8 @@ const defaultDonorsPool = [
     distanceKm: 3.2,
     daysAgo: 110,
     isAvailable: true,
-    maskedPhone: '98765*****',
+    phone: '9876541092',
+    maskedPhone: '9876541092',
     badge: 'Civil Doctor On-Duty',
     stripeColor: 'bg-teal-700',
   },
@@ -91,7 +96,8 @@ const defaultDonorsPool = [
     distanceKm: 3.8,
     daysAgo: 130,
     isAvailable: true,
-    maskedPhone: '98241*****',
+    phone: '9824190284',
+    maskedPhone: '9824190284',
     badge: 'Verified Rare Donor',
     stripeColor: 'bg-emerald-600',
   },
@@ -103,7 +109,8 @@ const defaultDonorsPool = [
     distanceKm: 1.1,
     daysAgo: 65,
     isAvailable: true,
-    maskedPhone: '98251*****',
+    phone: '9825109348',
+    maskedPhone: '9825109348',
     badge: 'Senior Registrar',
     stripeColor: 'bg-purple-600',
   },
@@ -115,7 +122,8 @@ const defaultDonorsPool = [
     distanceKm: 4.9,
     daysAgo: 105,
     isAvailable: true,
-    maskedPhone: '98790*****',
+    phone: '9879018247',
+    maskedPhone: '9879018247',
     badge: 'Voluntary Network Lead',
     stripeColor: 'bg-purple-700',
   },
@@ -127,7 +135,8 @@ const defaultDonorsPool = [
     distanceKm: 7.4,
     daysAgo: 150,
     isAvailable: true,
-    maskedPhone: '99042*****',
+    phone: '9904281729',
+    maskedPhone: '9904281729',
     badge: 'Rare Phenotype Registry',
     stripeColor: 'bg-indigo-600',
   },
@@ -139,7 +148,8 @@ const defaultDonorsPool = [
     distanceKm: 5.1,
     daysAgo: 155,
     isAvailable: true,
-    maskedPhone: '98253*****',
+    phone: '9825310948',
+    maskedPhone: '9825310948',
     badge: 'Universal Donor (O-)',
     stripeColor: 'bg-rose-600',
   },
@@ -151,7 +161,8 @@ const defaultDonorsPool = [
     distanceKm: 2.1,
     daysAgo: 110,
     isAvailable: true,
-    maskedPhone: '98250*****',
+    phone: '9825091834',
+    maskedPhone: '9825091834',
     badge: 'Active Registered Donor',
     stripeColor: 'bg-teal-700',
   },
@@ -163,7 +174,8 @@ const defaultDonorsPool = [
     distanceKm: 5.5,
     daysAgo: 100,
     isAvailable: true,
-    maskedPhone: '98762*****',
+    phone: '9876209148',
+    maskedPhone: '9876209148',
     badge: 'ENT Surgeon / Donor',
     stripeColor: 'bg-amber-700',
   },
@@ -361,188 +373,146 @@ export const FindDonors = () => {
           </div>
         </section>
 
-        {/* 2-COLUMN MAIN CONTENT GRID */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* DONORS STREAM (8 COLS) */}
-          <div className="lg:col-span-8 space-y-4">
-            <div className="flex items-center justify-between pb-1">
-              <div className="flex items-center gap-2">
-                <span className="text-base font-bold text-slate-900">{t('verified_matches')}</span>
-                <span className="px-2.5 py-0.5 rounded-full bg-teal-50 text-teal-800 font-mono text-xs font-bold border border-teal-200">
-                  {filteredDonors.length} Active
-                </span>
-              </div>
-              <span className="text-xs text-slate-500">{t('sorted_by_proximity')}</span>
+        {/* MAIN CONTENT - VERIFIED DONORS STREAM */}
+        <div className="w-full space-y-4">
+          <div className="flex items-center justify-between pb-1">
+            <div className="flex items-center gap-2">
+              <span className="text-base font-bold text-slate-900">{t('verified_matches')}</span>
+              <span className="px-2.5 py-0.5 rounded-full bg-teal-50 text-teal-800 font-mono text-xs font-bold border border-teal-200">
+                {filteredDonors.length} Active
+              </span>
             </div>
+            <span className="text-xs text-slate-500">{t('sorted_by_proximity')}</span>
+          </div>
 
-            {/* Clinical Compatibility Explanation Card */}
-            {selectedGroup !== 'All' && (
-              <div
-                className={`p-4 rounded-xl border text-xs flex items-start gap-3 shadow-xs ${
-                  selectedGroup === 'AB+'
-                    ? 'bg-emerald-50/80 border-emerald-200 text-emerald-950'
-                    : selectedGroup === 'O-'
-                    ? 'bg-rose-50/80 border-rose-200 text-rose-950'
-                    : 'bg-teal-50/80 border-teal-200 text-teal-950'
-                }`}
-              >
-                <span className="material-symbols-outlined text-[20px] shrink-0 mt-0.5 text-teal-700">
-                  bloodtype
-                </span>
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-bold">
-                      {selectedGroup === 'AB+'
-                        ? 'Universal Recipient Active (AB+)'
-                        : selectedGroup === 'O-'
-                        ? 'Universal Donor / Specific Recipient (O-)'
-                        : `Recipient Group: ${selectedGroup}`}
-                    </span>
-                    <span className="bg-white/80 border border-slate-200/80 px-2 py-0.5 rounded text-[11px] font-mono font-semibold">
-                      Compatible Donors: {compatibleGroups.join(', ')}
-                    </span>
-                  </div>
-                  <p className="text-[11px] leading-relaxed opacity-90">
+          {/* Clinical Compatibility Explanation Card */}
+          {selectedGroup !== 'All' && (
+            <div
+              className={`p-4 rounded-xl border text-xs flex items-start gap-3 shadow-xs ${
+                selectedGroup === 'AB+'
+                  ? 'bg-emerald-50/80 border-emerald-200 text-emerald-950'
+                  : selectedGroup === 'O-'
+                  ? 'bg-rose-50/80 border-rose-200 text-rose-950'
+                  : 'bg-teal-50/80 border-teal-200 text-teal-950'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[20px] shrink-0 mt-0.5 text-teal-700">
+                bloodtype
+              </span>
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-bold">
                     {selectedGroup === 'AB+'
-                      ? 'Patients with AB+ blood have both A and B antigens and Rh factor. They can safely receive red blood cells from all 8 blood groups (A+, A-, B+, B-, AB+, AB-, O+, O-). All matching voluntary donors are displayed below.'
+                      ? 'Universal Recipient Active (AB+)'
                       : selectedGroup === 'O-'
-                      ? 'Patients with O- blood have no A, B, or Rh surface antigens. They can safely receive red blood cells only from O- donors.'
-                      : `Patients with ${selectedGroup} blood can safely receive transfusions from donors with ${compatibleGroups.join(', ')} blood types.`}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Donor Cards */}
-            {loading ? (
-              <div className="space-y-4">
-                <DonorCardSkeleton />
-                <DonorCardSkeleton />
-                <DonorCardSkeleton />
-              </div>
-            ) : filteredDonors.length === 0 ? (
-              <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center shadow-sm">
-                <span className="material-symbols-outlined text-4xl text-slate-300">search_off</span>
-                <p className="font-semibold text-slate-700 mt-2">{t('no_matching_donors')}</p>
-                <p className="text-xs text-slate-500 mt-1">{t('try_expanding_radius')}</p>
-              </div>
-            ) : (
-              filteredDonors.map((donor) => (
-              <div
-                key={donor.id}
-                className="bg-white border border-slate-200 rounded-xl p-5 hover:border-slate-300 transition-all shadow-sm relative overflow-hidden"
-              >
-                <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${donor.stripeColor || 'bg-teal-700'}`}></div>
-
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pl-2">
-                  <div className="flex items-start gap-4">
-                    {/* Blood Group Callout */}
-                    <div className="w-16 h-16 rounded-xl bg-teal-50 border border-teal-200 flex flex-col items-center justify-center text-center p-1 shrink-0">
-                      <span className="font-mono text-2xl font-bold text-teal-800 leading-none">
-                        {donor.blood_group}
-                      </span>
-                      <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mt-0.5">
-                        Rh Positive
-                      </span>
-                    </div>
-
-                    {/* Donor Meta */}
-                    <div className="space-y-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="text-base font-bold text-slate-900">{donor.name}</h3>
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-teal-50 text-teal-800 text-[11px] font-semibold border border-teal-200">
-                          <span className="material-symbols-outlined text-[13px]">verified_user</span>
-                          <span>{donor.badge}</span>
-                        </span>
-                        <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] font-medium flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
-                          <span>Ready to Donate</span>
-                        </span>
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600">
-                        <span className="flex items-center gap-1 text-teal-700 font-semibold">
-                          <span className="material-symbols-outlined text-[15px]">check_circle</span>
-                          <span>{t('available_immediately')}</span>
-                        </span>
-                        <span className="text-slate-300">•</span>
-                        <span>
-                          Last Donated <strong className="font-mono text-slate-800 font-semibold">{donor.daysAgo} days ago</strong> (Eligible)
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-1.5 text-xs text-slate-500 pt-0.5">
-                        <span className="material-symbols-outlined text-[16px] text-teal-600">near_me</span>
-                        <span className="font-mono font-bold text-slate-800">{donor.distanceKm} km away</span>
-                        <span>({donor.city})</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex md:flex-col items-stretch justify-center gap-2 shrink-0 md:min-w-[170px] pt-3 md:pt-0 border-t md:border-t-0 border-slate-100">
-                    <button
-                      type="button"
-                      onClick={() => handleCallDonor(donor)}
-                      className="px-4 py-2.5 bg-teal-700 text-white hover:bg-teal-800 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-colors"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">ring_volume</span>
-                      <span>{t('call_request_donor')}</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => toast(`Donation History for ${donor.name}: Last donation verified under NBTC registry.`)}
-                      className="px-4 py-1.5 bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-medium flex items-center justify-center gap-1 transition-colors"
-                    >
-                      <span className="material-symbols-outlined text-[16px]">history</span>
-                      <span>{t('donation_record')}</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )))}
-          </div>
-
-          {/* TELEMETRY SIDE RAIL (4 COLS) */}
-          <div className="lg:col-span-4 space-y-4">
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3">
-              <div className="flex items-center gap-2 text-rose-600">
-                <span className="material-symbols-outlined text-lg">crisis_alert</span>
-                <h3 className="font-bold text-sm text-slate-900">Urgent Blood Deficit Telemetry</h3>
-              </div>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Critical reserves for rare negative phenotypes are currently tracked under State Emergency Transfusion protocols.
-              </p>
-              <div className="space-y-2 pt-1">
-                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-center justify-between">
-                  <div>
-                    <span className="font-bold text-xs text-rose-900 block">O- Negative</span>
-                    <span className="text-[11px] text-rose-700">Trauma ICU • 2 Units Needed</span>
-                  </div>
-                  <span className="px-2 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-bold">
-                    CRITICAL
+                      ? 'Universal Donor / Specific Recipient (O-)'
+                      : `Recipient Group: ${selectedGroup}`}
+                  </span>
+                  <span className="bg-white/80 border border-slate-200/80 px-2 py-0.5 rounded text-[11px] font-mono font-semibold">
+                    Compatible Donors: {compatibleGroups.join(', ')}
                   </span>
                 </div>
-                <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between">
-                  <div>
-                    <span className="font-bold text-xs text-amber-900 block">B+ Positive</span>
-                    <span className="text-[11px] text-amber-700">Cardiology OT • 3 Units Needed</span>
-                  </div>
-                  <span className="px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 text-[10px] font-bold">
-                    URGENT
-                  </span>
-                </div>
+                <p className="text-[11px] leading-relaxed opacity-90">
+                  {selectedGroup === 'AB+'
+                    ? 'Patients with AB+ blood have both A and B antigens and Rh factor. They can safely receive red blood cells from all 8 blood groups (A+, A-, B+, B-, AB+, AB-, O+, O-). All matching voluntary donors are displayed below.'
+                    : selectedGroup === 'O-'
+                    ? 'Patients with O- blood have no A, B, or Rh surface antigens. They can safely receive red blood cells only from O- donors.'
+                    : `Patients with ${selectedGroup} blood can safely receive transfusions from donors with ${compatibleGroups.join(', ')} blood types.`}
+                </p>
               </div>
-
-              <Link
-                to="/blood-requests"
-                className="w-full mt-2 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-colors"
-              >
-                <span>Open Central Depot Stream</span>
-                <span className="material-symbols-outlined text-sm">arrow_forward</span>
-              </Link>
             </div>
-          </div>
+          )}
+
+          {/* Donor Cards */}
+          {loading ? (
+            <div className="space-y-4">
+              <DonorCardSkeleton />
+              <DonorCardSkeleton />
+              <DonorCardSkeleton />
+            </div>
+          ) : filteredDonors.length === 0 ? (
+            <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center shadow-sm">
+              <span className="material-symbols-outlined text-4xl text-slate-300">search_off</span>
+              <p className="font-semibold text-slate-700 mt-2">{t('no_matching_donors')}</p>
+              <p className="text-xs text-slate-500 mt-1">{t('try_expanding_radius')}</p>
+            </div>
+          ) : (
+            filteredDonors.map((donor) => {
+              const donorPhone = donor.phone || donor.maskedPhone || '9876543210';
+              return (
+                <div
+                  key={donor.id}
+                  className="bg-white border border-slate-200 rounded-xl p-5 hover:border-slate-300 transition-all shadow-sm relative overflow-hidden"
+                >
+                  <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${donor.stripeColor || 'bg-teal-700'}`}></div>
+
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pl-2">
+                    <div className="flex items-start gap-4">
+                      {/* Blood Group Callout */}
+                      <div className="w-16 h-16 rounded-xl bg-teal-50 border border-teal-200 flex flex-col items-center justify-center text-center p-1 shrink-0">
+                        <span className="font-mono text-2xl font-bold text-teal-800 leading-none">
+                          {donor.blood_group}
+                        </span>
+                        <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mt-0.5">
+                          Rh Positive
+                        </span>
+                      </div>
+
+                      {/* Donor Meta */}
+                      <div className="space-y-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="text-base font-bold text-slate-900">{donor.name}</h3>
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-teal-50 text-teal-800 text-[11px] font-semibold border border-teal-200">
+                            <span className="material-symbols-outlined text-[13px]">verified_user</span>
+                            <span>{donor.badge}</span>
+                          </span>
+                          <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] font-medium flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                            <span>Ready to Donate</span>
+                          </span>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600">
+                          <span className="flex items-center gap-1 text-teal-700 font-semibold">
+                            <span className="material-symbols-outlined text-[15px]">check_circle</span>
+                            <span>{t('available_immediately')}</span>
+                          </span>
+                          <span className="text-slate-300">•</span>
+                          <span>
+                            Last Donated <strong className="font-mono text-slate-800 font-semibold">{donor.daysAgo} days ago</strong> (Eligible)
+                          </span>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 pt-0.5">
+                          <span className="flex items-center gap-1">
+                            <span className="material-symbols-outlined text-[16px] text-teal-600">near_me</span>
+                            <span className="font-mono font-bold text-slate-800">{donor.distanceKm} km away</span>
+                            <span>({donor.city})</span>
+                          </span>
+                          <span className="text-slate-300">•</span>
+                          <span className="flex items-center gap-1 text-slate-700 font-mono font-semibold">
+                            <span className="material-symbols-outlined text-[15px] text-teal-700">call</span>
+                            <span>{donorPhone}</span>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex md:flex-col items-stretch justify-center gap-2 shrink-0 md:min-w-[190px] pt-3 md:pt-0 border-t md:border-t-0 border-slate-100">
+                      <a
+                        href={`tel:${donorPhone}`}
+                        className="px-4 py-2.5 bg-teal-700 text-white hover:bg-teal-800 rounded-xl text-xs font-bold font-mono flex items-center justify-center gap-1.5 shadow-sm transition-colors text-center"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">call</span>
+                        <span>Call {donorPhone}</span>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </main>
     </div>

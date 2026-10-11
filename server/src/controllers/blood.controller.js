@@ -228,7 +228,7 @@ export const createBloodRequest = async (req, res, next) => {
  */
 export const getBloodRequests = async (req, res, next) => {
   try {
-    const { status = 'OPEN', blood_group, urgency } = req.query;
+    const { status, blood_group, urgency } = req.query;
 
     let queryText = `
       SELECT br.*, br.units AS units_required, br.units AS units_needed, u.name AS requester_name,
@@ -239,7 +239,7 @@ export const getBloodRequests = async (req, res, next) => {
     `;
     const params = [];
 
-    if (status) {
+    if (status && status !== 'ALL') {
       params.push(status);
       queryText += ` AND br.status = $${params.length}`;
     }

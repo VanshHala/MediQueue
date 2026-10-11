@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { getBloodRequests, createBloodRequest } from '../../api';
+import { getBloodRequests, createBloodRequest, fulfillBloodRequest } from '../../api';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
 import { BloodRequestSkeleton } from '../../components/Skeleton';
 
 const AHMEDABAD_AREAS = [
@@ -16,31 +17,42 @@ const AHMEDABAD_AREAS = [
   { name: 'Bopal', lat: 23.0338, lon: 72.4634 }
 ];
 
+const BLOOD_GROUPS = ['ALL', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+
 export const BloodRequestsBoard = () => {
   const { t } = useLanguage();
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const [filter, setFilter] = useState('ALL');
+
+  // Filters & Search
+  const [selectedGroup, setSelectedGroup] = useState('ALL');
+  const [selectedStatus, setSelectedStatus] = useState('ALL'); // 'ALL' | 'OPEN' | 'FULFILLED'
+  const [selectedUrgency, setSelectedUrgency] = useState('ALL'); // 'ALL' | 'CRITICAL'
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Data & Loading
   const [liveRequests, setLiveRequests] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [fulfillingId, setFulfillingId] = useState(null);
+
+  // Modal & Form State
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-
-  // Form state
   const [formData, setFormData] = useState({
     patient_name: '',
     blood_group: 'B+',
     units_required: 2,
     urgency: 'CRITICAL',
     hospital_name: 'Civil Hospital Ahmedabad - Trauma Wing',
-    contact_phone: '9876543210',
-    notes: 'Urgent emergency transfusion required immediately',
+    contact_phone: user?.phone || '9876543210',
+    notes: 'Urgent emergency transfusion required',
     selectedAreaIndex: 0
   });
 
-  const fetchRequests = async () => {
+  // Fetch real requests from PostgreSQL
+  const fetchRequests = useCallback(async () => {
     try {
-      setLoading(true);
-      const res = await getBloodRequests();
+      const res = await getBloodRequests({ status: 'ALL' });
       if (res.data?.data) {
         setLiveRequests(res.data.data);
       }
@@ -49,32 +61,44 @@ export const BloodRequestsBoard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchRequests();
-    const interval = setInterval(fetchRequests, 10000); // 10s polling
+    const interval = setInterval(fetchRequests, 10000); // 10s auto-refresh
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchRequests]);
 
+  // Create Requisition
   const handleCreateRequest = async (e) => {
     e.preventDefault();
     try {
       setSubmitting(true);
-      const area = AHMEDABAD_AREAS[formData.selectedAreaIndex];
+      const area = AHMEDABAD_AREAS[formData.selectedAreaIndex] || AHMEDABAD_AREAS[0];
       await createBloodRequest({
-        patient_name: formData.patient_name || 'Emergency Trauma Patient',
+        patient_name: formData.patient_name.trim() || 'Emergency Patient',
         blood_group: formData.blood_group,
-        units_required: Number(formData.units_required),
+        units_required: Number(formData.units_required) || 1,
         urgency: formData.urgency,
-        hospital_name: formData.hospital_name,
-        contact_phone: formData.contact_phone,
-        notes: formData.notes,
+        hospital_name: formData.hospital_name.trim() || 'Civil Hospital Ahmedabad',
+        contact_phone: formData.contact_phone.trim() || '9876543210',
+        notes: formData.notes.trim() || null,
         latitude: area.lat,
         longitude: area.lon
       });
-      toast.success('Emergency requisition broadcasted to local telemetry network!', { icon: '🩸' });
+      toast.success('Emergency requisition broadcasted successfully!', { icon: '🩸' });
       setShowModal(false);
+      // Reset form
+      setFormData({
+        patient_name: '',
+        blood_group: 'B+',
+        units_required: 2,
+        urgency: 'CRITICAL',
+        hospital_name: 'Civil Hospital Ahmedabad - Trauma Wing',
+        contact_phone: user?.phone || '9876543210',
+        notes: '',
+        selectedAreaIndex: 0
+      });
       fetchRequests();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to create requisition');
@@ -83,677 +107,503 @@ export const BloodRequestsBoard = () => {
     }
   };
 
+  // Mark Request as Fulfilled
+  const handleFulfill = async (id) => {
+    try {
+      setFulfillingId(id);
+      const res = await fulfillBloodRequest(id);
+      if (res.data?.success) {
+        toast.success(`Requisition #REQ-${id} marked as FULFILLED!`);
+        fetchRequests();
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to update requisition status');
+    } finally {
+      setFulfillingId(null);
+    }
+  };
+
+  // Filtered requests list
+  const filteredRequests = useMemo(() => {
+    return liveRequests.filter((req) => {
+      // Blood Group filter
+      if (selectedGroup !== 'ALL' && req.blood_group !== selectedGroup) return false;
+
+      // Status filter
+      if (selectedStatus === 'OPEN' && req.status !== 'OPEN') return false;
+      if (selectedStatus === 'FULFILLED' && req.status !== 'FULFILLED') return false;
+
+      // Urgency filter
+      if (selectedUrgency === 'CRITICAL' && req.urgency !== 'CRITICAL') return false;
+
+      // Search query
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchesPatient = req.patient_name?.toLowerCase().includes(q);
+        const matchesHospital = req.hospital_name?.toLowerCase().includes(q);
+        const matchesNotes = req.notes?.toLowerCase().includes(q);
+        const matchesPhone = req.contact_phone?.includes(q);
+        if (!matchesPatient && !matchesHospital && !matchesNotes && !matchesPhone) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [liveRequests, selectedGroup, selectedStatus, selectedUrgency, searchQuery]);
+
   return (
     <div className="flex flex-col min-h-screen bg-[#F7F9F7]">
-
       {/* Main Container */}
       <main className="p-4 lg:p-8 max-w-[1440px] mx-auto w-full space-y-6">
         {/* SCREEN HEADER */}
-        <section className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-3 border-b border-slate-200">
+        <section className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
           <div>
-            <div className="flex items-center gap-1.5 text-teal-700 text-xs font-bold tracking-widest uppercase mb-1">
-              <span className="material-symbols-outlined text-[15px]">vital_signs</span>
-              <span>CRITICAL TRANSFUSION TELEMETRY</span>
+            <div className="flex items-center gap-1.5 text-brand-darkGreen text-xs font-bold tracking-widest uppercase mb-1">
+              <span className="material-symbols-outlined text-[15px]">bloodtype</span>
+              <span>BLOOD DEPOT & TRANSFUSION REGISTRY</span>
             </div>
-            <h1 className="font-headline-lg text-2xl lg:text-3xl font-bold text-slate-900 tracking-tight">
-              {t('blood_section_title')}
+            <h1 className="text-2xl lg:text-3xl font-extrabold text-slate-900 tracking-tight">
+              Emergency Blood Requisitions
             </h1>
             <p className="text-sm text-slate-500 mt-0.5">
-              {t('blood_section_desc')}
+              Live hospital requisitions and donor dispatch across the Ahmedabad healthcare network.
             </p>
           </div>
 
-          <div className="flex items-center gap-3 shrink-0">
-            <button
-              onClick={() => toast.success('Live bank telemetry synced with Gujarat NBTC Vault')}
-              className="h-10 px-4 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-semibold flex items-center gap-2 transition-colors shadow-sm"
+          <div className="flex items-center gap-3 shrink-0 flex-wrap">
+            <Link
+              to="/find-donors"
+              className="h-10 px-4 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold flex items-center gap-2 transition-colors shadow-xs"
             >
-              <span className="material-symbols-outlined text-[18px]">sync</span>
-              <span>{t('sync_live_bank')}</span>
-            </button>
+              <span className="material-symbols-outlined text-[18px] text-brand-darkGreen">person_search</span>
+              <span>Find Voluntary Donors</span>
+            </Link>
+
             <button
               onClick={() => setShowModal(true)}
-              className="h-10 px-4 rounded-lg bg-teal-700 hover:bg-teal-800 text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-colors"
+              className="h-10 px-5 rounded-xl bg-brand-darkGreen hover:bg-teal-900 text-white text-xs font-bold flex items-center gap-2 shadow-xs transition-colors"
             >
               <span className="material-symbols-outlined text-[18px]">add_circle</span>
-              <span>{t('create_urgent_requisition')}</span>
+              <span>Post Blood Requisition</span>
             </button>
           </div>
         </section>
 
-        {/* TOP KPI / STATS BAR */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Metric 1: Active Urgent Requisitions */}
-          <div className="p-4 rounded-xl bg-white border border-slate-200 hover:border-rose-300 transition-colors relative overflow-hidden shadow-sm">
-            <div className="absolute top-0 left-0 w-1.5 h-full bg-rose-600"></div>
-            <div className="flex items-center justify-between text-slate-500 mb-2">
-              <span className="text-[11px] uppercase tracking-wider text-rose-700 font-bold">
-                {t('active_urgent_reqs')}
+        {/* SEARCH & FILTER CONTROLS */}
+        <section className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            {/* Search Input */}
+            <div className="relative flex-1 max-w-md">
+              <span className="material-symbols-outlined absolute left-3 top-2.5 text-slate-400 text-lg">
+                search
               </span>
-              <span className="material-symbols-outlined text-rose-600 text-[20px]">alarm</span>
+              <input
+                type="text"
+                placeholder="Search by patient, hospital, or phone..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-darkGreen"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+                >
+                  <span className="material-symbols-outlined text-sm">close</span>
+                </button>
+              )}
             </div>
-            <div className="flex items-baseline gap-2">
-              <span className="font-mono text-3xl font-extrabold text-slate-900 leading-none">4</span>
-              <span className="text-xs text-slate-700 font-semibold">Cases</span>
-            </div>
-            <div className="mt-2 text-xs text-rose-600 flex items-center gap-1 font-semibold">
-              <span className="material-symbols-outlined text-[14px]">priority_high</span>
-              <span>2 Critical Under 30 mins</span>
+
+            {/* Status & Urgency Pills */}
+            <div className="flex items-center gap-2 flex-wrap text-xs">
+              <span className="text-slate-400 font-bold uppercase text-[10px] tracking-wider">Status:</span>
+              <button
+                onClick={() => setSelectedStatus('ALL')}
+                className={`px-3 py-1.5 rounded-lg font-bold transition-colors ${
+                  selectedStatus === 'ALL'
+                    ? 'bg-slate-900 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                All
+              </button>
+              <button
+                onClick={() => setSelectedStatus('OPEN')}
+                className={`px-3 py-1.5 rounded-lg font-bold transition-colors ${
+                  selectedStatus === 'OPEN'
+                    ? 'bg-brand-darkGreen text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                Active / Open
+              </button>
+              <button
+                onClick={() => setSelectedStatus('FULFILLED')}
+                className={`px-3 py-1.5 rounded-lg font-bold transition-colors ${
+                  selectedStatus === 'FULFILLED'
+                    ? 'bg-emerald-700 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                Fulfilled
+              </button>
+
+              <div className="h-4 w-px bg-slate-200 mx-1 hidden sm:block"></div>
+
+              <button
+                onClick={() => setSelectedUrgency(selectedUrgency === 'CRITICAL' ? 'ALL' : 'CRITICAL')}
+                className={`px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 transition-colors ${
+                  selectedUrgency === 'CRITICAL'
+                    ? 'bg-rose-600 text-white shadow-xs'
+                    : 'bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[14px]">warning</span>
+                <span>Critical Only</span>
+              </button>
             </div>
           </div>
 
-          {/* Metric 2: Units Dispatched Today */}
-          <div className="p-4 rounded-xl bg-white border border-slate-200 hover:border-teal-300 transition-colors relative overflow-hidden shadow-sm">
-            <div className="absolute top-0 left-0 w-1.5 h-full bg-teal-600"></div>
-            <div className="flex items-center justify-between text-slate-500 mb-2">
-              <span className="text-[11px] uppercase tracking-wider font-semibold">
-                {t('units_dispatched_today')}
-              </span>
-              <span className="material-symbols-outlined text-teal-600 text-[20px]">
-                local_shipping
-              </span>
-            </div>
-            <div className="flex items-baseline gap-2">
-              <span className="font-mono text-3xl font-extrabold text-slate-900 leading-none">18</span>
-              <span className="text-xs text-slate-700 font-semibold">{t('units_needed')}</span>
-            </div>
-            <div className="mt-2 text-xs text-slate-500 flex items-center gap-1">
-              <span className="material-symbols-outlined text-[14px] text-teal-600">check_circle</span>
-              <span>Packed RBC & Whole Blood</span>
-            </div>
-          </div>
-
-          {/* Metric 3: Registered Donors on Alert */}
-          <div className="p-4 rounded-xl bg-white border border-slate-200 hover:border-teal-300 transition-colors relative overflow-hidden shadow-sm">
-            <div className="absolute top-0 left-0 w-1.5 h-full bg-teal-700"></div>
-            <div className="flex items-center justify-between text-slate-500 mb-2">
-              <span className="text-[11px] uppercase tracking-wider font-semibold">
-                {t('active_voluntary_donors')}
-              </span>
-              <span className="material-symbols-outlined text-teal-700 text-[20px]">
-                notifications_active
-              </span>
-            </div>
-            <div className="flex items-baseline gap-2">
-              <span className="font-mono text-3xl font-extrabold text-slate-900 leading-none">
-                142
-              </span>
-              <span className="text-xs text-slate-700 font-semibold">Active</span>
-            </div>
-            <div className="mt-2 text-xs text-slate-500 flex items-center gap-1 truncate">
-              <span className="material-symbols-outlined text-[14px] text-teal-700">location_on</span>
-              <span className="truncate">Ahmedabad Met Area (8km radius)</span>
-            </div>
-          </div>
-
-          {/* Metric 4: Depot Reserve Status */}
-          <div className="p-4 rounded-xl bg-white border border-slate-200 hover:border-teal-300 transition-colors relative overflow-hidden shadow-sm">
-            <div className="absolute top-0 left-0 w-1.5 h-full bg-teal-800"></div>
-            <div className="flex items-center justify-between text-slate-500 mb-2">
-              <span className="text-[11px] uppercase tracking-wider font-semibold">
-                {t('depot_reserve_index')}
-              </span>
-              <span className="material-symbols-outlined text-teal-800 text-[20px]">
-                inventory_2
-              </span>
-            </div>
-            <div className="flex items-baseline gap-2">
-              <span className="font-mono text-3xl font-extrabold text-slate-900 leading-none">86%</span>
-              <span className="text-xs text-teal-700 font-semibold">Optimal</span>
-            </div>
-            <div className="mt-2 text-xs text-slate-500 flex items-center gap-1">
-              <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                <div className="bg-teal-600 h-full w-[86%] rounded-full"></div>
-              </div>
-            </div>
+          {/* Blood Group Selectors */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-1 border-t border-slate-100">
+            <span className="text-slate-400 font-bold uppercase text-[10px] tracking-wider mr-2 shrink-0">
+              Blood Group:
+            </span>
+            {BLOOD_GROUPS.map((grp) => {
+              const isActive = selectedGroup === grp;
+              return (
+                <button
+                  key={grp}
+                  onClick={() => setSelectedGroup(grp)}
+                  className={`px-3 py-1 text-xs font-bold rounded-lg shrink-0 transition-all ${
+                    isActive
+                      ? 'bg-brand-darkGreen text-white shadow-xs'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  {grp}
+                </button>
+              );
+            })}
           </div>
         </section>
 
-        {/* TWO-COLUMN WORKSPACE */}
+        {/* TWO-COLUMN LAYOUT */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* LEFT COLUMN: ACTIVE REQUISITIONS STREAM (8 Cols) */}
           <section className="lg:col-span-8 space-y-4">
             <div className="flex items-center justify-between pb-1">
               <div className="flex items-center gap-2">
-                <h2 className="text-base font-bold text-slate-900">Active Requisitions Stream</h2>
-                <span className="bg-rose-100 text-rose-800 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider">
-                  2 REALTIME ALERTS
+                <h2 className="text-base font-bold text-slate-900">Live Requisitions</h2>
+                <span className="bg-slate-100 text-slate-700 font-mono text-xs font-bold px-2 py-0.5 rounded-full border border-slate-200">
+                  {filteredRequests.length}
                 </span>
               </div>
-              <div className="flex items-center gap-1 text-xs text-slate-500">
-                <span className="font-semibold mr-1">Filter:</span>
-                <button
-                  onClick={() => setFilter('ALL')}
-                  className={`px-2.5 py-1 rounded font-semibold ${
-                    filter === 'ALL' ? 'bg-slate-900 text-white' : 'hover:bg-slate-100 text-slate-700'
-                  }`}
-                >
-                  All
-                </button>
-                <button
-                  onClick={() => setFilter('CRITICAL')}
-                  className={`px-2.5 py-1 rounded font-semibold ${
-                    filter === 'CRITICAL'
-                      ? 'bg-rose-600 text-white'
-                      : 'hover:bg-slate-100 text-slate-700'
-                  }`}
-                >
-                  Critical
-                </button>
-                <button
-                  onClick={() => setFilter('FULFILLED')}
-                  className={`px-2.5 py-1 rounded font-semibold ${
-                    filter === 'FULFILLED'
-                      ? 'bg-teal-600 text-white'
-                      : 'hover:bg-slate-100 text-slate-700'
-                  }`}
-                >
-                  Fulfilled
-                </button>
-              </div>
+              <span className="text-xs text-slate-500 flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>Live Telemetry</span>
+              </span>
             </div>
 
-            {/* LIVE DATABASE REQUISITIONS */}
+            {/* SKELETON LOADING */}
             {loading && liveRequests.length === 0 ? (
               <div className="space-y-4">
                 <BloodRequestSkeleton />
                 <BloodRequestSkeleton />
+                <BloodRequestSkeleton />
               </div>
-            ) : (
-              liveRequests
-                .filter((req) => {
-                  if (filter === 'ALL') return true;
-                  if (filter === 'CRITICAL') return req.urgency === 'CRITICAL';
-                  if (filter === 'FULFILLED') return req.status === 'FULFILLED';
-                  return true;
-                })
-                .map((req) => (
-                <article
-                  key={req.id}
-                  className={`bg-white rounded-xl border border-slate-200 p-5 relative overflow-hidden shadow-sm border-l-4 ${
-                    req.urgency === 'CRITICAL' ? 'border-l-rose-600' : 'border-l-teal-600'
-                  }`}
-                >
-                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                    <div className="space-y-1 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-mono text-xs text-slate-600 font-bold bg-slate-100 px-2 py-0.5 rounded">
-                          #REQ-{String(req.id || '').slice(0, 8).toUpperCase()}
-                        </span>
-                        <span
-                          className={`px-2 py-0.5 rounded text-[10px] uppercase tracking-wider font-bold flex items-center gap-1 ${
-                            req.status === 'FULFILLED'
-                              ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                              : req.urgency === 'CRITICAL'
-                              ? 'bg-rose-50 text-rose-800 border border-rose-200'
-                              : 'bg-teal-50 text-teal-800 border border-teal-200'
-                          }`}
-                        >
-                          <span
-                            className={`w-1.5 h-1.5 rounded-full ${
-                              req.status === 'FULFILLED'
-                                ? 'bg-emerald-600'
-                                : 'bg-rose-600 animate-pulse'
-                            }`}
-                          ></span>
-                          {req.status === 'FULFILLED' ? 'FULFILLED' : `${req.urgency} TELEMETRY`}
-                        </span>
-                        <span className="text-slate-500 font-mono text-xs font-semibold flex items-center gap-1">
-                          <span className="material-symbols-outlined text-[16px]">schedule</span>
-                          {new Date(req.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </div>
-
-                      <div className="pt-1">
-                        <h3
-                          className={`text-base font-bold ${
-                            req.urgency === 'CRITICAL' ? 'text-rose-600' : 'text-slate-900'
-                          }`}
-                        >
-                          {req.urgency === 'CRITICAL' ? 'URGENT: ' : ''}
-                          {req.blood_group} {req.units_required} Unit{req.units_required > 1 ? 's' : ''} Required
-                        </h3>
-                        <p className="text-xs text-slate-700 mt-0.5">
-                          For <strong className="font-semibold text-slate-900">{req.hospital_name}</strong>
-                          {req.notes ? ` (${req.notes})` : ''}
-                        </p>
-                      </div>
-
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-1 gap-x-4 pt-2 text-xs border-t border-slate-100 mt-3 text-slate-500">
-                        <div>
-                          <span>Patient:</span>
-                          <span className="text-slate-800 font-semibold ml-1">{req.patient_name}</span>
-                        </div>
-                        <div>
-                          <span>Contact:</span>
-                          <span className="font-mono text-slate-800 ml-1">{req.contact_phone}</span>
-                        </div>
-                        <div>
-                          <span>Status:</span>
-                          <span className="text-teal-700 ml-1 font-medium font-mono">{req.status}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Blood Type Callout Badge */}
-                    <div className="shrink-0 flex md:flex-col items-center justify-center p-3 rounded-xl bg-slate-50 border border-slate-200 min-w-[96px] text-center">
-                      <span className="text-[10px] text-slate-400 uppercase font-bold">GROUP</span>
-                      <span className="font-mono text-2xl font-bold text-rose-600">{req.blood_group}</span>
-                      <span className="font-mono text-xs text-slate-600 font-semibold">
-                        {req.units_required} Unit{req.units_required > 1 ? 's' : ''}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                      <span className="material-symbols-outlined text-[17px] text-teal-600">
-                        radar
-                      </span>
-                      <span>Real-time Ahmedabad geo-coordinates locked</span>
-                    </div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <button
-                        onClick={() => navigate(`/find-donors?group=${encodeURIComponent(req.blood_group)}`)}
-                        className="h-8 px-3 rounded-lg bg-teal-700 hover:bg-teal-800 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm"
-                      >
-                        <span className="material-symbols-outlined text-[15px]">person_search</span>
-                        <span>{t('match_local_donors')}</span>
-                      </button>
-                      <button
-                        onClick={() => toast.success(`Encrypted beacon dispatched to nearby ${req.blood_group} donors`)}
-                        className="h-8 px-3 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-colors"
-                      >
-                        <span className="material-symbols-outlined text-[15px]">cell_tower</span>
-                        <span>{t('broadcast_sms')}</span>
-                      </button>
-                    </div>
-                  </div>
-                </article>
-              )))}
-
-            {/* REQUISITION CARD 1: REQ-9041 */}
-            {(filter === 'ALL' || filter === 'CRITICAL') && (
-              <article className="bg-white rounded-xl border border-slate-200 p-5 relative overflow-hidden shadow-sm border-l-4 border-l-rose-600">
-                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                  <div className="space-y-1 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono text-xs text-slate-600 font-bold bg-slate-100 px-2 py-0.5 rounded">
-                        #REQ-9041
-                      </span>
-                      <span className="bg-rose-50 text-rose-800 border border-rose-200 px-2 py-0.5 rounded text-[10px] uppercase tracking-wider font-bold flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse"></span>
-                        DISPATCH PENDING
-                      </span>
-                      <span className="text-rose-600 font-mono text-xs font-semibold flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[16px]">timer</span>
-                        Elapsed: 14 mins
-                      </span>
-                    </div>
-
-                    <div className="pt-1">
-                      <h3 className="text-base font-bold text-rose-600">
-                        URGENT: B+ 2 Units Required
-                      </h3>
-                      <p className="text-xs text-slate-700 mt-0.5">
-                        For <strong className="font-semibold text-slate-900">ICU Bay 4</strong>{' '}
-                        (Trauma Surgery - Civil Hospital)
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-1 gap-x-4 pt-2 text-xs border-t border-slate-100 mt-3 text-slate-500">
-                      <div>
-                        <span>Patient UHID:</span>
-                        <span className="font-mono text-slate-800 font-semibold ml-1">8841-2091</span>
-                      </div>
-                      <div>
-                        <span>Attending:</span>
-                        <span className="text-slate-800 ml-1 font-medium">
-                          Dr. R. Desai (Trauma Lead)
-                        </span>
-                      </div>
-                      <div>
-                        <span>Blood Component:</span>
-                        <span className="text-slate-800 ml-1 font-medium">PRBC Crossmatch</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Blood Type Callout Badge */}
-                  <div className="shrink-0 flex md:flex-col items-center justify-center p-3 rounded-xl bg-slate-50 border border-slate-200 min-w-[96px] text-center">
-                    <span className="text-[10px] text-slate-400 uppercase font-bold">GROUP</span>
-                    <span className="font-mono text-2xl font-bold text-rose-600">B+</span>
-                    <span className="font-mono text-xs text-slate-600 font-semibold">2 Units</span>
-                  </div>
+            ) : filteredRequests.length === 0 ? (
+              /* EMPTY STATE */
+              <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center space-y-3 shadow-xs">
+                <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+                  <span className="material-symbols-outlined text-2xl">bloodtype</span>
                 </div>
-
-                {/* Action Cluster */}
-                <div className="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                    <span className="material-symbols-outlined text-[17px] text-rose-600">
-                      warning
-                    </span>
-                    <span>Immediate requisition requires depot approval within 16 mins</span>
-                  </div>
-                  <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="font-bold text-slate-900 text-base">No Requisitions Found</h3>
+                <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                  {searchQuery || selectedGroup !== 'ALL' || selectedStatus !== 'ALL'
+                    ? 'No requests match your selected filters. Try clearing your search or switching to "All".'
+                    : 'No active blood requisitions in the registry currently.'}
+                </p>
+                <div className="pt-2 flex justify-center gap-2">
+                  {(searchQuery || selectedGroup !== 'ALL' || selectedStatus !== 'ALL' || selectedUrgency !== 'ALL') && (
                     <button
-                      onClick={() => toast.success('Transfer initiated from Civil Depot 3')}
-                      className="h-8 px-3 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                      onClick={() => {
+                        setSelectedGroup('ALL');
+                        setSelectedStatus('ALL');
+                        setSelectedUrgency('ALL');
+                        setSearchQuery('');
+                      }}
+                      className="px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-bold rounded-xl transition-colors"
                     >
-                      <span className="material-symbols-outlined text-[15px]">share_location</span>
-                      <span>Transfer from Civil Depot 3</span>
+                      Clear Filters
                     </button>
-                    <button
-                      onClick={() => navigate('/find-donors?group=B+')}
-                      className="h-8 px-3 rounded-lg bg-teal-700 hover:bg-teal-800 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm"
-                    >
-                      <span className="material-symbols-outlined text-[15px]">person_search</span>
-                      <span>Match Local Donors</span>
-                    </button>
-                    <button
-                      onClick={() => toast.error('State NBTC Level 1 Alert Escalate Triggered')}
-                      className="h-8 px-3 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center gap-1.5 transition-colors"
-                    >
-                      <span className="material-symbols-outlined text-[15px]">campaign</span>
-                      <span>Escalate NBTC Alert</span>
-                    </button>
-                  </div>
-                </div>
-              </article>
-            )}
-
-            {/* REQUISITION CARD 2: REQ-9038 */}
-            {(filter === 'ALL' || filter === 'CRITICAL') && (
-              <article className="bg-white rounded-xl border border-slate-200 p-5 relative overflow-hidden shadow-sm border-l-4 border-l-teal-600">
-                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                  <div className="space-y-1 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono text-xs text-slate-600 font-bold bg-slate-100 px-2 py-0.5 rounded">
-                        #REQ-9038
-                      </span>
-                      <span className="bg-teal-50 text-teal-800 border border-teal-200 px-2 py-0.5 rounded text-[10px] uppercase tracking-wider font-bold flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-teal-600 animate-ping"></span>
-                        1 DONOR RESPONDED (EN ROUTE)
-                      </span>
-                      <span className="text-teal-700 font-mono text-xs font-semibold flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[16px]">directions_bike</span>
-                        ETA: 18 mins
-                      </span>
-                    </div>
-
-                    <div className="pt-1">
-                      <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                        <span>O- Negative 1 Unit (Rare)</span>
-                        <span className="text-[10px] font-bold px-2 py-0.5 bg-rose-100 text-rose-800 rounded">
-                          RARE PHENOTYPE
-                        </span>
-                      </h3>
-                      <p className="text-xs text-slate-700 mt-0.5">
-                        For <strong className="font-semibold text-slate-900">OT 2</strong> (Cardiac
-                        Intervention - Aortic Repair)
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-1 gap-x-4 pt-2 text-xs border-t border-slate-100 mt-3 text-slate-500">
-                      <div>
-                        <span>Donor Name:</span>
-                        <span className="text-slate-800 font-semibold ml-1">Vikram S.</span>
-                      </div>
-                      <div>
-                        <span>Donor ID:</span>
-                        <span className="font-mono text-slate-800 ml-1">91-4402-9912</span>
-                      </div>
-                      <div>
-                        <span>Transit Route:</span>
-                        <span className="text-slate-800 ml-1 font-medium">Ellisbridge → Civil OT</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Group Callout */}
-                  <div className="shrink-0 flex md:flex-col items-center justify-center p-3 rounded-xl bg-slate-50 border border-slate-200 min-w-[96px] text-center">
-                    <span className="text-[10px] text-slate-400 uppercase font-bold">GROUP</span>
-                    <span className="font-mono text-2xl font-bold text-rose-600">0-</span>
-                    <span className="font-mono text-xs text-slate-600 font-semibold">1 Unit</span>
-                  </div>
-                </div>
-
-                <div className="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                    <span className="material-symbols-outlined text-[17px] text-teal-600">
-                      satellite_alt
-                    </span>
-                    <span>Live GPS ping recorded 42 seconds ago (Satellite Locked)</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => toast('Donor Medical Record retrieved')}
-                      className="h-8 px-3 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-colors"
-                    >
-                      <span className="material-symbols-outlined text-[15px]">badge</span>
-                      <span>View Medical Record</span>
-                    </button>
-                    <button
-                      onClick={() => toast.success('Telemetry tracking: Donor 2.4 km away on Ashram Road')}
-                      className="h-8 px-3 rounded-lg bg-teal-700 hover:bg-teal-800 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm"
-                    >
-                      <span className="material-symbols-outlined text-[15px]">sensors</span>
-                      <span>Track Vitals & ETA</span>
-                    </button>
-                  </div>
-                </div>
-              </article>
-            )}
-
-            {/* REQUISITION CARD 3: REQ-9029 */}
-            {(filter === 'ALL' || filter === 'FULFILLED') && (
-              <article className="bg-white rounded-xl border border-slate-200 p-5 relative overflow-hidden shadow-sm border-l-4 border-l-emerald-600">
-                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                  <div className="space-y-1 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono text-xs text-slate-600 font-bold bg-slate-100 px-2 py-0.5 rounded">
-                        #REQ-9029
-                      </span>
-                      <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded text-[10px] uppercase tracking-wider font-bold flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[14px]">done_all</span>
-                        FULFILLED & LOGGED
-                      </span>
-                      <span className="text-slate-500 font-mono text-xs">
-                        Completed at 10:45 AM
-                      </span>
-                    </div>
-
-                    <div className="pt-1">
-                      <h3 className="text-base font-bold text-slate-900">A+ 3 Units</h3>
-                      <p className="text-xs text-slate-700 mt-0.5">
-                        For <strong className="font-semibold text-slate-900">Ward 12</strong>{' '}
-                        (Oncology Daycare - Platelet Transfusion Complete)
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-1 gap-x-4 pt-2 text-xs border-t border-slate-100 mt-3 text-slate-500">
-                      <div>
-                        <span>Patient UHID:</span>
-                        <span className="font-mono text-slate-800 font-semibold ml-1">7720-4105</span>
-                      </div>
-                      <div>
-                        <span>Depot Batch:</span>
-                        <span className="font-mono text-slate-800 ml-1">B-9982-A</span>
-                      </div>
-                      <div>
-                        <span>Dispensed By:</span>
-                        <span className="text-slate-800 ml-1 font-medium">Sr. Tech K. Sharma</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="shrink-0 flex md:flex-col items-center justify-center p-3 rounded-xl bg-slate-50 border border-slate-200 min-w-[96px] text-center">
-                    <span className="text-[10px] text-slate-400 uppercase font-bold">GROUP</span>
-                    <span className="font-mono text-2xl font-bold text-teal-700">A+</span>
-                    <span className="font-mono text-xs text-slate-600 font-semibold">3 Units</span>
-                  </div>
-                </div>
-
-                <div className="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
-                  <span className="text-xs text-slate-500">
-                    Chain-of-custody smart voucher #V-2041 logged to State Telemetry
-                  </span>
+                  )}
                   <button
-                    onClick={() => toast.success('Downloaded Clinical Receipt')}
-                    className="h-8 px-3 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                    onClick={() => setShowModal(true)}
+                    className="px-4 py-2 bg-brand-darkGreen text-white text-xs font-bold rounded-xl hover:bg-teal-900 transition-colors shadow-xs"
                   >
-                    <span className="material-symbols-outlined text-[15px]">receipt</span>
-                    <span>Download Clinical Receipt</span>
+                    Post New Request
                   </button>
                 </div>
-              </article>
+              </div>
+            ) : (
+              /* REAL REQUISITIONS LIST */
+              filteredRequests.map((req) => {
+                const isCritical = req.urgency === 'CRITICAL';
+                const isFulfilled = req.status === 'FULFILLED';
+                const units = req.units || req.units_required || req.units_needed || 1;
+
+                return (
+                  <article
+                    key={req.id}
+                    className={`bg-white rounded-2xl border p-5 relative overflow-hidden shadow-xs transition-all ${
+                      isFulfilled
+                        ? 'border-slate-200 opacity-90'
+                        : isCritical
+                        ? 'border-rose-300 ring-1 ring-rose-100'
+                        : 'border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                      {/* Left: Patient and Hospital Details */}
+                      <div className="space-y-1.5 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-mono text-xs text-slate-600 font-bold bg-slate-100 px-2 py-0.5 rounded">
+                            #REQ-{req.id}
+                          </span>
+
+                          {/* Urgency / Status Pill */}
+                          {isFulfilled ? (
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                              <span className="material-symbols-outlined text-[13px]">check_circle</span>
+                              <span>FULFILLED</span>
+                            </span>
+                          ) : isCritical ? (
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-bold bg-rose-50 text-rose-700 border border-rose-200 flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse"></span>
+                              <span>CRITICAL (&lt; 30 MINS)</span>
+                            </span>
+                          ) : (
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-bold bg-teal-50 text-brand-darkGreen border border-teal-200 flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-brand-darkGreen"></span>
+                              <span>{req.urgency || 'ACTIVE'}</span>
+                            </span>
+                          )}
+
+                          {req.created_at && (
+                            <span className="text-slate-400 font-mono text-xs flex items-center gap-1">
+                              <span className="material-symbols-outlined text-[14px]">schedule</span>
+                              {new Date(req.created_at).toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="pt-0.5">
+                          <h3
+                            className={`text-base font-bold ${
+                              isCritical ? 'text-rose-700' : 'text-slate-900'
+                            }`}
+                          >
+                            {req.blood_group} &bull; {units} Unit{units > 1 ? 's' : ''} Needed
+                          </h3>
+                          <p className="text-xs text-slate-600 mt-0.5">
+                            For <strong className="font-semibold text-slate-900">{req.hospital_name}</strong>
+                            {req.city ? ` (${req.city})` : ''}
+                          </p>
+                        </div>
+
+                        {req.notes && (
+                          <p className="text-xs text-slate-500 italic bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100">
+                            &ldquo;{req.notes}&rdquo;
+                          </p>
+                        )}
+
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-1 gap-x-4 pt-2 text-xs border-t border-slate-100 text-slate-500">
+                          <div>
+                            <span>Patient:</span>
+                            <span className="text-slate-900 font-semibold ml-1">{req.patient_name}</span>
+                          </div>
+                          <div>
+                            <span>Contact:</span>
+                            <a
+                              href={`tel:${req.contact_phone}`}
+                              className="font-mono text-brand-darkGreen font-semibold ml-1 hover:underline"
+                            >
+                              {req.contact_phone}
+                            </a>
+                          </div>
+                          <div>
+                            <span>Status:</span>
+                            <span className="font-semibold text-slate-700 ml-1">{req.status}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right: Blood Group Badge */}
+                      <div className="shrink-0 flex sm:flex-col items-center justify-center p-3 rounded-xl bg-slate-50 border border-slate-200 min-w-[90px] text-center">
+                        <span className="text-[10px] text-slate-400 uppercase font-bold">GROUP</span>
+                        <span className="font-mono text-2xl font-black text-rose-600">{req.blood_group}</span>
+                        <span className="font-mono text-xs text-slate-600 font-semibold">
+                          {units} Unit{units > 1 ? 's' : ''}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Action Bar */}
+                    <div className="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                        <span className="material-symbols-outlined text-[16px] text-brand-darkGreen">
+                          location_on
+                        </span>
+                        <span>{req.city || 'Ahmedabad Central Zone'}</span>
+                      </div>
+
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {/* Direct Phone Call */}
+                        {req.contact_phone && (
+                          <a
+                            href={`tel:${req.contact_phone}`}
+                            className="h-8 px-3 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                          >
+                            <span className="material-symbols-outlined text-[15px]">call</span>
+                            <span>Call</span>
+                          </a>
+                        )}
+
+                        {/* Match Local Donors */}
+                        <button
+                          onClick={() => navigate(`/find-donors?group=${encodeURIComponent(req.blood_group)}`)}
+                          className="h-8 px-3.5 rounded-lg bg-brand-darkGreen hover:bg-teal-900 text-white text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs"
+                        >
+                          <span className="material-symbols-outlined text-[15px]">person_search</span>
+                          <span>Match Compatible Donors</span>
+                        </button>
+
+                        {/* Mark As Fulfilled Button */}
+                        {!isFulfilled && (
+                          <button
+                            onClick={() => handleFulfill(req.id)}
+                            disabled={fulfillingId === req.id}
+                            className="h-8 px-3 rounded-lg bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200 text-xs font-bold flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                          >
+                            <span className="material-symbols-outlined text-[15px]">check</span>
+                            <span>{fulfillingId === req.id ? 'Updating...' : 'Mark Fulfilled'}</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </article>
+                );
+              })
             )}
           </section>
 
-          {/* RIGHT COLUMN: DEPOT LIVE INVENTORY & INTAKE (4 Cols) */}
-          <section className="lg:col-span-4 space-y-4">
-            {/* 1. Depot Live Inventory Card */}
-            <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div>
-                  <h3 className="font-bold text-sm text-slate-900">Depot Live Inventory</h3>
-                  <span className="text-xs text-slate-500">Central Reserve Vault #1</span>
+          {/* RIGHT COLUMN: REQUISITION HELPER & COMPATIBILITY GUIDE (4 Cols) */}
+          <section className="lg:col-span-4 space-y-5">
+            {/* 1. Post New Requisition Card */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
+              <div className="flex items-center gap-2 text-brand-darkGreen">
+                <span className="material-symbols-outlined text-xl">emergency_share</span>
+                <h3 className="font-bold text-sm text-slate-900">Need Immediate Blood?</h3>
+              </div>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Broadcast an emergency blood requisition across hospitals, trauma centers, and registered voluntary donors in Ahmedabad.
+              </p>
+              <button
+                onClick={() => setShowModal(true)}
+                className="w-full h-10 rounded-xl bg-brand-darkGreen hover:bg-teal-900 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-xs transition-colors"
+              >
+                <span className="material-symbols-outlined text-[17px]">add_circle</span>
+                <span>Post Blood Requisition</span>
+              </button>
+            </div>
+
+            {/* 2. Clinical Compatibility Reference Guide */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                <div className="flex items-center gap-1.5 text-brand-darkGreen">
+                  <span className="material-symbols-outlined text-lg">medical_services</span>
+                  <h3 className="font-bold text-sm text-slate-900">RBC Compatibility Guide</h3>
                 </div>
-                <span className="px-2 py-0.5 bg-teal-50 text-teal-800 border border-teal-200 rounded text-[11px] font-bold font-mono">
-                  2.4°C COLD CHAIN
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  CLINICAL
                 </span>
               </div>
 
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase text-[11px]">
-                      <th className="py-2">GROUP</th>
-                      <th className="py-2">IN STOCK</th>
-                      <th className="py-2 text-right">DEPOT STATUS</th>
+                    <tr className="border-b border-slate-100 text-slate-400 font-bold uppercase text-[10px]">
+                      <th className="py-2">Recipient</th>
+                      <th className="py-2 text-right">Can Receive From</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    <tr>
-                      <td className="py-2.5 font-bold text-slate-800">O+ (Rh Pos)</td>
-                      <td className="py-2.5 font-mono">24 Units</td>
-                      <td className="py-2.5 text-right">
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-800 border border-teal-200">
-                          • Good
-                        </span>
-                      </td>
-                    </tr>
-                    <tr className="bg-rose-50/40">
-                      <td className="py-2.5 font-bold text-rose-600">0- (Universal)</td>
-                      <td className="py-2.5 font-mono text-rose-700 font-bold">2 Units</td>
-                      <td className="py-2.5 text-right">
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-600 text-white shadow-2xs">
-                          • Critical Alert
-                        </span>
-                      </td>
+                  <tbody className="divide-y divide-slate-100 font-mono text-[11px]">
+                    <tr className="bg-emerald-50/50">
+                      <td className="py-2 font-bold text-emerald-900">AB+ (Universal)</td>
+                      <td className="py-2 text-right text-emerald-800 font-semibold">All 8 Groups</td>
                     </tr>
                     <tr>
-                      <td className="py-2.5 font-bold text-slate-800">B+ (Rh Pos)</td>
-                      <td className="py-2.5 font-mono">14 Units</td>
-                      <td className="py-2.5 text-right">
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                          • Adequate
-                        </span>
-                      </td>
+                      <td className="py-2 font-bold text-slate-800">A+</td>
+                      <td className="py-2 text-right text-slate-600">A+, A-, O+, O-</td>
                     </tr>
                     <tr>
-                      <td className="py-2.5 font-bold text-slate-800">A+ (Rh Pos)</td>
-                      <td className="py-2.5 font-mono">18 Units</td>
-                      <td className="py-2.5 text-right">
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-800 border border-teal-200">
-                          • Good
-                        </span>
-                      </td>
+                      <td className="py-2 font-bold text-slate-800">B+</td>
+                      <td className="py-2 text-right text-slate-600">B+, B-, O+, O-</td>
                     </tr>
-                    <tr className="bg-rose-50/40">
-                      <td className="py-2.5 font-bold text-rose-600">AB- (Rare)</td>
-                      <td className="py-2.5 font-mono text-rose-700 font-bold">1 Unit</td>
-                      <td className="py-2.5 text-right">
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-600 text-white shadow-2xs">
-                          • Critical
-                        </span>
-                      </td>
+                    <tr className="bg-rose-50/50">
+                      <td className="py-2 font-bold text-rose-800">O- (Universal Donor)</td>
+                      <td className="py-2 text-right text-rose-700 font-bold">O- Only</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2 font-bold text-slate-800">O+</td>
+                      <td className="py-2 text-right text-slate-600">O+, O-</td>
                     </tr>
                   </tbody>
                 </table>
               </div>
 
-              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                <span>
-                  Next Crossmatch Run: <strong className="text-slate-800">11:30 AM</strong>
-                </span>
-                <span className="text-teal-700 font-semibold cursor-pointer hover:underline flex items-center gap-0.5">
-                  View Full Matrix <span className="material-symbols-outlined text-sm">arrow_forward</span>
-                </span>
-              </div>
+              <p className="text-[11px] text-slate-400 leading-relaxed pt-1">
+                Patients with <strong className="text-slate-700">O-</strong> blood are universal red cell donors, while <strong className="text-slate-700">AB+</strong> patients are universal recipients.
+              </p>
             </div>
 
-            {/* 2. Rapid Requisition Intake */}
-            <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">
-              <h3 className="font-bold text-sm text-slate-900">Rapid Requisition Intake</h3>
+            {/* 3. Voluntary Donors Directory Link */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
+              <div className="flex items-center gap-2 text-brand-darkGreen">
+                <span className="material-symbols-outlined text-lg">volunteer_activism</span>
+                <h3 className="font-bold text-sm text-slate-900">Voluntary Donors Network</h3>
+              </div>
               <p className="text-xs text-slate-500 leading-relaxed">
-                Authorize emergency crossmatching or trigger automated city-wide voluntary donor dispatch.
+                Connect directly with verified on-duty voluntary blood donors registered in Ahmedabad.
               </p>
-              <button
-                onClick={() => setShowModal(true)}
-                className="w-full h-10 rounded-lg bg-teal-700 hover:bg-teal-800 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-colors"
+              <Link
+                to="/find-donors"
+                className="w-full h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center justify-center gap-2 transition-colors"
               >
-                <span className="material-symbols-outlined text-[17px]">add_box</span>
-                <span>Create Emergency Blood Requisition</span>
-              </button>
-              <button
-                onClick={() => toast.error('Emergency SMS broadcast dispatched to 142 registered nearby donors')}
-                className="w-full h-10 rounded-lg bg-white border border-rose-200 text-rose-700 hover:bg-rose-50 text-xs font-bold flex items-center justify-center gap-2 transition-colors"
-              >
-                <span className="material-symbols-outlined text-[17px]">cell_tower</span>
-                <span>Broadcast Voluntary SMS Beacon</span>
-              </button>
-            </div>
-
-            {/* 3. Donor Directive Protocol #NBTC-09 */}
-            <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-2.5">
-              <div className="flex items-center gap-2 text-rose-600">
-                <span className="material-symbols-outlined text-lg">shield</span>
-                <span className="font-bold text-xs uppercase tracking-wider text-slate-900">
-                  DONOR DIRECTIVE & PROTOCOL #NBTC-09
-                </span>
-              </div>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Per State Transfusion Safety Board regulations, all voluntary mobile dispatches for negative RH phenotypes must undergo double digital identity verification upon arrival at the central depot reception.
-              </p>
-              <a
-                href="#protocols"
-                onClick={(e) => {
-                  e.preventDefault();
-                  toast('National Blood Transfusion Protocols opened');
-                }}
-                className="text-xs text-teal-700 font-semibold hover:underline flex items-center gap-1 pt-1"
-              >
-                <span>Read Emergency Blood Act Protocols</span>
-                <span className="material-symbols-outlined text-sm">open_in_new</span>
-              </a>
+                <span className="material-symbols-outlined text-[17px] text-brand-darkGreen">search</span>
+                <span>Browse Registered Donors</span>
+              </Link>
             </div>
           </section>
         </div>
       </main>
 
-      {/* EMERGENCY BLOOD REQUISITION MODAL */}
+      {/* CREATE EMERGENCY BLOOD REQUISITION MODAL */}
       {showModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[100] flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-xl w-full overflow-hidden my-8">
-
             <div className="p-6">
               <div className="flex items-center justify-between pb-4 border-b border-slate-100">
                 <div className="flex items-center gap-2 text-rose-600">
                   <span className="material-symbols-outlined text-2xl">bloodtype</span>
                   <div>
-                    <h3 className="text-lg font-bold text-slate-900">Create Emergency Blood Requisition</h3>
-                    <p className="text-xs text-slate-500">Real-time Gujarat NBTC Central Depot Telemetry broadcast</p>
+                    <h3 className="text-lg font-bold text-slate-900">Post Emergency Blood Requisition</h3>
+                    <p className="text-xs text-slate-500">Broadcasts immediately to the Ahmedabad hospital registry</p>
                   </div>
                 </div>
                 <button
@@ -769,15 +619,15 @@ export const BloodRequestsBoard = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                      Patient Name / Case ID
+                      Patient Name / UHID
                     </label>
                     <input
                       type="text"
                       required
-                      placeholder="e.g. Ramesh Patel / OT Bay 4"
+                      placeholder="e.g. Ramesh Patel"
                       value={formData.patient_name}
                       onChange={(e) => setFormData({ ...formData, patient_name: e.target.value })}
-                      className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-700"
+                      className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-darkGreen"
                     />
                   </div>
 
@@ -788,7 +638,7 @@ export const BloodRequestsBoard = () => {
                     <select
                       value={formData.blood_group}
                       onChange={(e) => setFormData({ ...formData, blood_group: e.target.value })}
-                      className="w-full px-3 py-2 text-xs font-bold text-rose-600 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-700"
+                      className="w-full px-3 py-2 text-xs font-bold text-rose-600 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-darkGreen"
                     >
                       {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map((grp) => (
                         <option key={grp} value={grp}>
@@ -811,7 +661,7 @@ export const BloodRequestsBoard = () => {
                       required
                       value={formData.units_required}
                       onChange={(e) => setFormData({ ...formData, units_required: e.target.value })}
-                      className="w-full px-3 py-2 text-xs font-mono font-bold bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-700"
+                      className="w-full px-3 py-2 text-xs font-mono font-bold bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-darkGreen"
                     />
                   </div>
 
@@ -822,11 +672,11 @@ export const BloodRequestsBoard = () => {
                     <select
                       value={formData.urgency}
                       onChange={(e) => setFormData({ ...formData, urgency: e.target.value })}
-                      className="w-full px-3 py-2 text-xs font-bold bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-700"
+                      className="w-full px-3 py-2 text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-darkGreen"
                     >
                       <option value="CRITICAL">CRITICAL (&lt; 30 mins)</option>
                       <option value="URGENT">URGENT (&lt; 2 hrs)</option>
-                      <option value="NORMAL">NORMAL (Elective Surgery)</option>
+                      <option value="NORMAL">NORMAL (Elective)</option>
                     </select>
                   </div>
                 </div>
@@ -841,22 +691,22 @@ export const BloodRequestsBoard = () => {
                       required
                       value={formData.hospital_name}
                       onChange={(e) => setFormData({ ...formData, hospital_name: e.target.value })}
-                      className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-700"
+                      className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-darkGreen"
                     />
                   </div>
 
                   <div>
                     <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                      Ahmedabad Area / Coordinates
+                      Hospital Zone / Area
                     </label>
                     <select
                       value={formData.selectedAreaIndex}
                       onChange={(e) => setFormData({ ...formData, selectedAreaIndex: Number(e.target.value) })}
-                      className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-700"
+                      className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-darkGreen"
                     >
                       {AHMEDABAD_AREAS.map((a, idx) => (
                         <option key={a.name} value={idx}>
-                          {a.name} ({a.lat}, {a.lon})
+                          {a.name}
                         </option>
                       ))}
                     </select>
@@ -866,53 +716,46 @@ export const BloodRequestsBoard = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                      Emergency Contact Phone
+                      Contact Phone
                     </label>
                     <input
                       type="tel"
                       required
                       value={formData.contact_phone}
                       onChange={(e) => setFormData({ ...formData, contact_phone: e.target.value })}
-                      className="w-full px-3 py-2 text-xs font-mono bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-700"
+                      className="w-full px-3 py-2 text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-darkGreen"
                     />
                   </div>
 
                   <div>
                     <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                      Clinical Notes / Crossmatch
+                      Clinical Notes / Remarks
                     </label>
                     <input
                       type="text"
-                      placeholder="e.g. PRBC crossmatch ready"
+                      placeholder="e.g. Crossmatch ready at ICU Bay 2"
                       value={formData.notes}
                       onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                      className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-700"
+                      className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-darkGreen"
                     />
                   </div>
-                </div>
-
-                <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-900 flex items-start gap-2">
-                  <span className="material-symbols-outlined text-base text-amber-700 shrink-0 mt-0.5">info</span>
-                  <span>
-                    Submitting will immediately issue an automated geo-fence calculation to identify and notify verified donors within a 10 km radius.
-                  </span>
                 </div>
 
                 <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
                   <button
                     type="button"
                     onClick={() => setShowModal(false)}
-                    className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                    className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="px-5 py-2 text-xs font-bold text-white bg-teal-700 hover:bg-teal-800 disabled:opacity-50 rounded-lg flex items-center gap-1.5 shadow-sm transition-colors"
+                    className="px-5 py-2.5 text-xs font-bold text-white bg-brand-darkGreen hover:bg-teal-900 disabled:opacity-50 rounded-xl flex items-center gap-1.5 shadow-xs transition-colors"
                   >
                     <span className="material-symbols-outlined text-base">emergency_share</span>
-                    <span>{submitting ? 'Broadcasting...' : 'Authorize & Broadcast Requisition'}</span>
+                    <span>{submitting ? 'Submitting...' : 'Post Requisition'}</span>
                   </button>
                 </div>
               </form>

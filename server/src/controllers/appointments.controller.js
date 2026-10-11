@@ -81,7 +81,7 @@ export const bookAppointment = async (req, res, next) => {
     const duplicateCheck = await client.query(
       `SELECT id FROM appointments
        WHERE patient_id = $1 AND doctor_id = $2 AND appt_date = $3
-         AND status NOT IN ('CANCELLED', 'NO_SHOW')`,
+         AND status IN ('BOOKED', 'CHECKED_IN', 'IN_CONSULTATION')`,
       [userId, doctor_id, appt_date]
     );
 

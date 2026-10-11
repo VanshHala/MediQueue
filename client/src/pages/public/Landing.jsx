@@ -11,7 +11,6 @@ import {
   Users,
   ShieldCheck,
   ArrowRight,
-  Tv,
   CheckCircle2,
   Sparkles,
   MapPin,
@@ -306,35 +305,7 @@ export const Landing = () => {
         </div>
       </section>
 
-      {/* 4. LIVE TV QUEUE DISPLAY PREVIEW BANNER */}
-      <section className="py-14 bg-gradient-to-br from-slate-900 via-teal-950 to-slate-900 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            <div className="lg:col-span-8 space-y-4">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/20 text-teal-300 text-xs font-bold uppercase tracking-wider">
-                <Tv className="w-4 h-4 text-teal-400" />
-                Hospital Waiting Room TV Display
-              </div>
-              <h3 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-                Full-Screen Public Display for Hospital Lounges
-              </h3>
-              <p className="text-sm text-slate-300 max-w-2xl leading-relaxed">
-                Streamed on waiting room TVs, displaying current "NOW SERVING" tokens, upcoming patient series, doctor availability, and urgent medical priority banners in high contrast dark mode.
-              </p>
-            </div>
-            <div className="lg:col-span-4 flex lg:justify-end">
-              <Link
-                to="/live-display"
-                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl font-bold bg-white text-slate-900 hover:bg-slate-100 transition shadow-lg text-sm"
-              >
-                Launch Live Display Screen <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 5. BLOOD DONOR NETWORK SECTION */}
+      {/* 4. BLOOD DONOR NETWORK SECTION */}
       <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
           <div>
@@ -441,9 +412,6 @@ export const Landing = () => {
             </div>
 
             <div className="flex flex-wrap items-center justify-center gap-4 text-xs font-semibold text-slate-600">
-              <Link to="/live-display" className="hover:text-teal-700 transition-colors">
-                Live TV Queue
-              </Link>
               <Link to="/blood-requests" className="hover:text-rose-600 transition-colors">
                 Emergency Blood Depot
               </Link>

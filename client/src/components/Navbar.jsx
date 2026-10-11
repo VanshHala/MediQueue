@@ -142,16 +142,6 @@ export default function Navbar() {
                 <span className="material-symbols-outlined text-[16px]">bloodtype</span>
                 <span>{t('blood_depot')}</span>
               </Link>
-
-              <Link
-                to="/live-display"
-                className={`hover:text-teal-700 flex items-center gap-1 pb-0.5 transition-colors ${
-                  isActive('/live-display') ? 'text-teal-700 border-b-2 border-teal-700 font-bold' : ''
-                }`}
-              >
-                <span className="material-symbols-outlined text-[16px]">tv</span>
-                <span>Live TV</span>
-              </Link>
             </nav>
           )}
 
@@ -170,13 +160,6 @@ export default function Navbar() {
               >
                 <span className="material-symbols-outlined text-[16px]">person_search</span>
                 <span>Find Donors</span>
-              </Link>
-              <Link
-                to="/live-display"
-                className="hover:text-teal-700 flex items-center gap-1 transition-colors"
-              >
-                <span className="material-symbols-outlined text-[16px]">tv</span>
-                <span>Live TV Queue</span>
               </Link>
             </nav>
           )}
@@ -412,17 +395,6 @@ export default function Navbar() {
                   >
                     <span className="material-symbols-outlined text-lg text-[#00614b]">person_search</span>
                     <span>Find Voluntary Donors</span>
-                  </Link>
-
-                  <Link
-                    to="/live-display"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
-                      isActive('/live-display') ? 'bg-teal-50 text-teal-800 font-bold' : 'text-slate-700 hover:bg-slate-50'
-                    }`}
-                  >
-                    <span className="material-symbols-outlined text-lg">tv</span>
-                    <span>Live Waiting Hall TV</span>
                   </Link>
                 </div>
               </div>

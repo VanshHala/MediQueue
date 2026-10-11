@@ -208,6 +208,8 @@ export const FindDonors = () => {
           if (res.data?.data?.donors?.length > 0) {
             const mapped = res.data.data.donors.map((d) => ({
               ...d,
+              phone: d.phone || d.maskedPhone || '9876543210',
+              maskedPhone: d.phone || d.maskedPhone || '9876543210',
               daysAgo: d.eligibility?.daysSinceDonation ?? 100,
               isAvailable: d.eligibility?.isEligible ?? true,
               badge: d.role === 'doctor' ? 'Medical Staff Donor' : 'Verified Registered Donor',
@@ -225,6 +227,8 @@ export const FindDonors = () => {
         if (res.data?.data?.length > 0) {
           const mapped = res.data.data.map((d) => ({
             ...d,
+            phone: d.phone || d.maskedPhone || '9876543210',
+            maskedPhone: d.phone || d.maskedPhone || '9876543210',
             distanceKm: d.distanceKm || (Math.floor(Math.random() * 40 + 15) / 10),
             daysAgo: d.daysAgo || 110,
             isAvailable: d.isAvailable ?? true,

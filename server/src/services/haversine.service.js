@@ -68,16 +68,10 @@ export const CAN_DONATE_TO_RECIPIENTS = {
 };
 
 /**
- * Mask a 10-digit phone number for donor privacy (e.g., 9876543210 -> 98765***** or +91 98765 *****)
+ * Returns the donor's full phone number directly for dialing and display
  */
 export const maskPhoneNumber = (phone) => {
-  if (!phone) return '98765*****';
-  const clean = phone.replace(/[^0-9]/g, '');
-  if (clean.length >= 10) {
-    const visible = clean.slice(-10, -5);
-    return `${visible}*****`;
-  }
-  return `${phone.slice(0, 4)}*****`;
+  return phone || '9876543210';
 };
 
 /**

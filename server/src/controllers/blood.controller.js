@@ -130,14 +130,15 @@ export const getAllDonors = async (req, res, next) => {
 
     const scored = donors.map((d) => {
       const eligibility = checkDonorEligibility(d.last_donation_date);
-      const maskedPhone = maskPhoneNumber(d.phone);
+      const fullPhone = d.phone || '9876543210';
       return {
         id: d.id,
         name: d.name,
         blood_group: d.blood_group,
         city: d.city || 'Ahmedabad',
         eligibility,
-        maskedPhone,
+        phone: fullPhone,
+        maskedPhone: fullPhone,
         role: d.role,
         isAvailable: eligibility.isEligible,
         daysAgo: eligibility.daysSinceDonation ?? 120,
@@ -355,7 +356,7 @@ export const getNearbyDonorsForRequest = async (req, res, next) => {
 
       const distanceKm = calculateDistanceKm(reqLat, reqLng, donorLat, donorLng);
       const eligibility = checkDonorEligibility(d.last_donation_date);
-      const maskedPhone = maskPhoneNumber(d.phone);
+      const fullPhone = d.phone || '9876543210';
 
       return {
         id: d.id,
@@ -364,7 +365,8 @@ export const getNearbyDonorsForRequest = async (req, res, next) => {
         city: d.city || 'Ahmedabad',
         distanceKm,
         eligibility,
-        maskedPhone,
+        phone: fullPhone,
+        maskedPhone: fullPhone,
         role: d.role,
       };
     });

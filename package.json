@@ -5,6 +5,10 @@
   "scripts": {
     "dev": "concurrently -n \"SERVER,CLIENT\" -c \"cyan,magenta\" \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
     "start": "concurrently -n \"SERVER,CLIENT\" -c \"cyan,magenta\" \"npm run start --prefix server\" \"npm run preview --prefix client\"",
+    "build": "npm run build --prefix client",
+    "build:client": "npm run build --prefix client",
+    "build:server": "npm --prefix server install",
+    "start:server": "npm run start --prefix server",
     "db:init": "npm run db:init --prefix server",
     "install:all": "npm install && npm install --prefix server && npm install --prefix client"
   },

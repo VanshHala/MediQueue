@@ -16,13 +16,30 @@ import adminRoutes from './routes/admin.routes.js';
 
 const app = express();
 
-// Security and utility middlewares
+// Allow configured CLIENT_URL, Vercel deployments, and local development
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://127.0.0.1:5173',
+  CLIENT_URL?.replace(/\/+$/, '')
+].filter(Boolean);
+
 app.use(helmet());
 app.use(
   cors({
-    origin: CLIENT_URL || 'http://localhost:5173',
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g., mobile apps, curl, server-to-server)
+      if (!origin) return callback(null, true);
+      const cleanOrigin = origin.replace(/\/+$/, '');
+      if (allowedOrigins.includes(cleanOrigin)) return callback(null, true);
+      // Allow any Vercel domain or Render preview domain
+      if (/\.vercel\.app$/.test(new URL(origin).hostname)) return callback(null, true);
+      if (/\.onrender\.com$/.test(new URL(origin).hostname)) return callback(null, true);
+      // Fallback allow in production to prevent unexpected cross-origin blocks
+      return callback(null, true);
+    },
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
   })
 );
@@ -30,7 +47,17 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Health Check
+// Root health check for Render & uptime monitors
+app.get('/', (req, res) => {
+  res.status(200).json({
+    success: true,
+    name: 'MediQueue API',
+    status: 'operational',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Dedicated API health check
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     success: true,

@@ -160,9 +160,11 @@ export const LiveDisplay = () => {
       {/* TOP HEADER */}
       <header className="px-6 lg:px-10 py-4 bg-[#051712] border-b border-teal-900/60 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-teal-600 rounded-xl flex items-center justify-center text-white shadow-md font-bold">
-            <span className="material-symbols-outlined text-2xl">local_hospital</span>
-          </div>
+          <img
+            src="/logo.png"
+            alt="MediQueue Logo"
+            className="w-12 h-12 rounded-xl object-contain bg-white p-1 shadow-md border border-teal-500/30"
+          />
           <div>
             <div className="flex items-center gap-2">
               <span className="font-extrabold text-xl lg:text-2xl tracking-tight uppercase">

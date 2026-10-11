@@ -81,9 +81,11 @@ export const Login = () => {
 
           <div>
             <div className="flex items-center gap-2.5 mb-8">
-              <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white">
-                <Activity className="w-6 h-6 stroke-[2.5]" />
-              </div>
+              <img
+                src="/logo.png"
+                alt="MediQueue Logo"
+                className="w-11 h-11 object-contain rounded-xl bg-white p-1 border border-white/20 shadow-md"
+              />
               <span className="font-sans font-extrabold text-2xl tracking-tight text-white">
                 Medi<span className="text-teal-200">Queue</span>
               </span>

@@ -32,10 +32,12 @@ export default function Navbar() {
       {/* Shared Component: TopNavBar */}
       <header className="flex justify-between items-center w-full px-4 lg:px-10 h-16 bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm print:hidden">
         <div className="flex items-center gap-4">
-          <Link to="/" className="flex items-center gap-2.5">
-            <div className="w-9 h-9 bg-teal-600 rounded-lg flex items-center justify-center text-white shadow-sm">
-              <span className="material-symbols-outlined text-xl">local_hospital</span>
-            </div>
+          <Link to="/" className="flex items-center gap-2.5 group">
+            <img
+              src="/logo.png"
+              alt="MediQueue Logo"
+              className="w-9 h-9 object-contain rounded-lg border border-slate-200 shadow-xs group-hover:scale-105 transition-transform bg-white"
+            />
             <div>
               <span className="font-headline-lg text-lg tracking-tight font-extrabold text-slate-900 uppercase">
                 Medi<span className="text-teal-700">Queue</span>

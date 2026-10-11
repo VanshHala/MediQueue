@@ -130,8 +130,12 @@ export const Register = () => {
         
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-teal-100 text-teal-800 mb-3">
-            <Activity className="w-6 h-6 stroke-[2.5]" />
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-white border border-slate-200 mb-3 p-1.5 shadow-xs">
+            <img
+              src="/logo.png"
+              alt="MediQueue Logo"
+              className="w-full h-full object-contain"
+            />
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
             {t('register_title')}

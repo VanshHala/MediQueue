@@ -880,9 +880,11 @@ export const AdminDashboard = () => {
               {/* Official Letterhead Header */}
               <div className="border-b-2 border-slate-900 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-teal-700 text-white flex items-center justify-center font-bold shadow-sm">
-                    <span className="material-symbols-outlined text-2xl">local_hospital</span>
-                  </div>
+                  <img
+                    src="/logo.png"
+                    alt="MediQueue Logo"
+                    className="w-12 h-12 rounded-xl object-contain bg-white border border-slate-200 p-1 shadow-sm"
+                  />
                   <div>
                     <h2 className="text-lg md:text-xl font-extrabold text-slate-900 uppercase tracking-tight">
                       Civil Hospital Ahmedabad • Gujarat State Health Mission

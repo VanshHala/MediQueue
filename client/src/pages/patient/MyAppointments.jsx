@@ -68,7 +68,7 @@ export default function MyAppointments() {
       <Sidebar activeSection="appointments" />
 
       {/* MAIN CONTENT CANVAS */}
-      <main className="flex-1 p-5 md:p-6 lg:p-8 overflow-y-auto">
+      <main className="flex-1 min-w-0 p-3.5 sm:p-5 md:p-6 lg:p-8 overflow-y-auto pb-24 md:pb-8">
         {/* Patient OPD Central Console Banner Card */}
         <div className="bg-white border border-slate-200 rounded-xl p-5 md:p-6 shadow-sm mb-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

@@ -138,10 +138,22 @@ export const Login = () => {
         </div>
 
         {/* Right Form Panel */}
-        <div className="p-8 sm:p-10 flex flex-col justify-center">
+        <div className="p-5 sm:p-8 lg:p-10 flex flex-col justify-center">
+          {/* Mobile Logo Brand */}
+          <div className="lg:hidden flex items-center gap-2.5 mb-6">
+            <img
+              src="/logo.png"
+              alt="MediQueue Logo"
+              className="w-10 h-10 object-contain rounded-xl bg-white p-1 border border-slate-200 shadow-xs"
+            />
+            <span className="font-extrabold text-xl tracking-tight text-slate-900">
+              Medi<span className="text-[#00614b]">Queue</span>
+            </span>
+          </div>
+
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{t('login_title')}</h1>
-            <p className="text-sm text-slate-500 mt-1">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">{t('login_title')}</h1>
+            <p className="text-xs sm:text-sm text-slate-500 mt-1">
               {t('login_subtitle')}
             </p>
           </div>

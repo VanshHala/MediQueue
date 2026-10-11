@@ -74,7 +74,7 @@ export const PatientDonorProfile = () => {
       <Sidebar />
 
       {/* MAIN CONTENT CANVAS */}
-      <main className="flex-1 px-4 lg:px-8 py-6 overflow-y-auto max-w-7xl">
+      <main className="flex-1 min-w-0 px-3.5 sm:px-6 lg:px-8 py-6 overflow-y-auto max-w-7xl pb-24 md:pb-8">
         {/* Header Title Area */}
         <section className="mb-6">
           <div className="flex flex-wrap items-center justify-between gap-4">

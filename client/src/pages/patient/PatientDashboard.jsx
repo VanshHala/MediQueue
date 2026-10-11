@@ -92,7 +92,7 @@ export default function PatientDashboard() {
       <Sidebar />
 
       {/* MAIN CONTENT CANVAS */}
-      <main className="flex-1 p-4 lg:p-8 space-y-7 overflow-y-auto">
+      <main className="flex-1 min-w-0 p-3.5 sm:p-5 lg:p-8 space-y-6 sm:space-y-7 overflow-y-auto pb-24 md:pb-8">
         {/* Header Greeting & Facility Status */}
         <section className="border-b border-slate-200 pb-5 flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>

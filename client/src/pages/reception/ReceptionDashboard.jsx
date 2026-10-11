@@ -189,14 +189,14 @@ export const ReceptionDashboard = () => {
         </div>
 
         {/* Mode Switch (Walk-in vs Emergency) */}
-        <div className="flex items-center gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
+        <div className="flex items-center gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200 w-full sm:w-auto">
           <button
             type="button"
             onClick={() => {
               setMode('walkin');
               setLastIssuedTicket(null);
             }}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition ${
+            className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl text-xs font-bold transition ${
               !isEmergencyMode
                 ? 'bg-teal-700 text-white shadow-2xs'
                 : 'text-slate-600 hover:text-slate-900'
@@ -212,7 +212,7 @@ export const ReceptionDashboard = () => {
               setMode('emergency');
               setLastIssuedTicket(null);
             }}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition ${
+            className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl text-xs font-bold transition ${
               isEmergencyMode
                 ? 'bg-rose-600 text-white shadow-2xs ring-2 ring-rose-500 ring-offset-1'
                 : 'text-rose-700 hover:bg-rose-50'

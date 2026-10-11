@@ -125,8 +125,8 @@ export const Register = () => {
   const isSenior = parseInt(formData.age, 10) >= 60;
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] py-8 px-4 sm:px-6 lg:px-8 max-w-2xl mx-auto">
-      <div className="bg-white rounded-3xl border border-ink-200 p-6 sm:p-10 shadow-sm">
+    <div className="min-h-[calc(100vh-4rem)] py-6 sm:py-8 px-3.5 sm:px-6 lg:px-8 max-w-2xl mx-auto">
+      <div className="bg-white rounded-3xl border border-ink-200 p-5 sm:p-8 lg:p-10 shadow-sm">
         
         {/* Header */}
         <div className="text-center mb-8">

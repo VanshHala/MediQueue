@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
 import api from '../../api/axios';
 
@@ -159,26 +160,26 @@ export const LiveDisplay = () => {
     <div className="min-h-screen bg-[#082019] text-white flex flex-col justify-between selection:bg-teal-500 selection:text-white select-none">
       {/* TOP HEADER */}
       <header className="px-6 lg:px-10 py-4 bg-[#051712] border-b border-teal-900/60 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
+        <Link to="/" className="flex items-center gap-3 sm:gap-4 group" title="Return to MediQueue Home">
           <img
             src="/logo.png"
             alt="MediQueue Logo"
-            className="w-12 h-12 rounded-xl object-contain bg-white p-1 shadow-md border border-teal-500/30"
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-contain bg-white p-1 shadow-md border border-teal-500/30 group-hover:scale-105 transition-transform"
           />
           <div>
-            <div className="flex items-center gap-2">
-              <span className="font-extrabold text-xl lg:text-2xl tracking-tight uppercase">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-extrabold text-lg sm:text-xl lg:text-2xl tracking-tight uppercase text-white">
                 MEDI<span className="text-teal-400">QUEUE</span>
               </span>
-              <span className="px-2.5 py-0.5 rounded-full bg-teal-900/80 border border-teal-500/30 text-teal-300 text-xs font-bold uppercase tracking-wider">
+              <span className="px-2 sm:px-2.5 py-0.5 rounded-full bg-teal-900/80 border border-teal-500/30 text-teal-300 text-[10px] sm:text-xs font-bold uppercase tracking-wider">
                 LIVE WAITING HALL TV
               </span>
             </div>
-            <p className="text-xs text-teal-200/80 font-medium mt-0.5">
+            <p className="text-[11px] sm:text-xs text-teal-200/80 font-medium mt-0.5">
               Civil Hospital Ahmedabad — Asarwa Campus • New OPD Block Ground Floor
             </p>
           </div>
-        </div>
+        </Link>
 
         {/* Live Status Indicators */}
         <div className="flex items-center gap-4">

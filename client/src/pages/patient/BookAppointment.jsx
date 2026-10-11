@@ -200,7 +200,7 @@ export default function BookAppointment() {
       <Sidebar activeSection="book" />
 
       {/* MAIN CLINICAL CONTENT CANVAS */}
-      <main className="flex-1 min-w-0 p-4 lg:p-8 space-y-6 overflow-y-auto">
+      <main className="flex-1 min-w-0 p-3.5 sm:p-5 lg:p-8 space-y-6 overflow-y-auto pb-24 md:pb-8">
         {/* TOP WAYFINDING BREADCRUMB BANNER */}
         <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">

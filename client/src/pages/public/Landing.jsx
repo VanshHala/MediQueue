@@ -65,7 +65,7 @@ export const Landing = () => {
                 </Link>
               </div>
 
-              <div className="pt-4 flex items-center justify-center lg:justify-start gap-6 text-xs text-ink-500 font-medium">
+              <div className="pt-4 flex flex-wrap items-center justify-center lg:justify-start gap-3 sm:gap-6 text-xs text-ink-500 font-medium">
                 <span className="flex items-center gap-1.5">
                   <CheckCircle2 className="w-4 h-4 text-teal-600" /> {t('landing_feature_refresh')}
                 </span>

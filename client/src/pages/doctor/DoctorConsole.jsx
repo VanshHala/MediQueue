@@ -128,8 +128,8 @@ export const DoctorConsole = () => {
     <div className="flex flex-col min-h-[calc(100vh-4rem)] bg-[#f8fafc]">
       {/* WORKSPACE WITH DOCKED CLINICAL SIDEBAR */}
       <div className="flex-1 flex overflow-hidden">
-        {/* DOCTOR SIDEBAR */}
-        <aside className="w-68 w-[17.5rem] bg-white border-r border-slate-200 shrink-0 flex flex-col justify-between p-4 select-none sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto">
+        {/* DOCTOR SIDEBAR (Desktop / Large Screens) */}
+        <aside className="hidden lg:flex w-68 w-[17.5rem] bg-white border-r border-slate-200 shrink-0 flex-col justify-between p-4 select-none sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto">
           <div className="space-y-4">
             {/* Dynamic Doctor Profile Card */}
             <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center gap-3 shadow-sm">
@@ -185,8 +185,39 @@ export const DoctorConsole = () => {
           </div>
         </aside>
 
-        {/* MAIN TWO-COLUMN WORKSPACE */}
-        <main className="flex-1 overflow-y-auto p-5 lg:p-6 flex flex-col gap-5 bg-[#f8fafc]">
+        {/* MAIN WORKSPACE WRAPPER */}
+        <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+          {/* MOBILE / TABLET DOCTOR STRIP */}
+          <div className="lg:hidden bg-white border-b border-slate-200 p-3.5 flex flex-wrap items-center justify-between gap-3 shadow-xs">
+            <div className="flex items-center gap-3 min-w-0">
+              <div
+                style={{ backgroundColor: '#00614b' }}
+                className="w-10 h-10 text-white rounded-xl flex items-center justify-center shrink-0 font-bold shadow-xs text-xs"
+              >
+                {getInitials(doctorName)}
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-sm font-bold text-slate-900 truncate">{doctorName}</h2>
+                <p className="text-xs font-semibold text-teal-700 truncate">
+                  {doctorDept} • Room {doctorRoom}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-1 bg-teal-50 text-teal-800 text-xs font-bold rounded-lg border border-teal-200">
+                In Queue: {waitingList.length}
+              </span>
+              <button
+                onClick={fetchLiveQueue}
+                className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+                title="Refresh Queue"
+              >
+                <span className="material-symbols-outlined text-base">refresh</span>
+              </button>
+            </div>
+          </div>
+
+          <main className="flex-1 p-3.5 sm:p-5 lg:p-6 flex flex-col gap-5 bg-[#f8fafc]">
           {loading && !queueData ? (
             <div className="space-y-5 animate-in fade-in duration-200">
               <div className="w-full bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between shadow-sm">
@@ -558,7 +589,8 @@ export const DoctorConsole = () => {
               </div>
             </>
           )}
-        </main>
+          </main>
+        </div>
       </div>
     </div>
   );

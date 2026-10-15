@@ -1,6 +1,11 @@
 import axios from 'axios';
 
 const rawUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+if (import.meta.env.PROD && !import.meta.env.VITE_API_URL) {
+  console.warn(
+    '[MediQueue] ⚠️ VITE_API_URL environment variable is not set! Defaulting to localhost:5000. Please configure VITE_API_URL in your Vercel project settings.'
+  );
+}
 const baseURL = rawUrl.endsWith('/api')
   ? rawUrl
   : `${rawUrl.replace(/\/+$/, '')}/api`;

@@ -208,7 +208,7 @@ export const DoctorConsole = () => {
                 In Queue: {waitingList.length}
               </span>
               <button
-                onClick={fetchLiveQueue}
+                onClick={fetchQueue}
                 className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
                 title="Refresh Queue"
               >
